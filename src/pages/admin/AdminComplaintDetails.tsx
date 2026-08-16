@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useComplaints } from '../../context/ComplaintContext';
-import type { ComplaintStatus } from '../../types';
+import type { ComplaintStatus, Complaint } from '../../types';
 import { StatusBadge, PriorityBadge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
 import { Timeline } from '../../components/complaints/Timeline';
 import { CommentSection } from '../../components/complaints/CommentSection';
 import { Modal } from '../../components/common/Modal';
+import { LoadingSkeleton } from '../../components/common/LoadingSkeleton';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -25,9 +26,15 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
   complaintId,
   onNavigate,
 }) => {
-  const { getComplaintById, updateStatus, assignOfficer, addComment } = useComplaints();
+  const { getComplaintById, fetchComplaintById, updateStatus, assignOfficer, addComment } =
+    useComplaints();
 
-  const complaint = getComplaintById(complaintId);
+  const [complaint, setComplaint] = useState<Complaint | undefined>(() =>
+    getComplaintById(complaintId)
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(!complaint);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState<boolean>(false);
+  const [isAssigning, setIsAssigning] = useState<boolean>(false);
 
   const [selectedStatus, setSelectedStatus] = useState<ComplaintStatus>(
     complaint?.status || 'Submitted'
@@ -40,6 +47,41 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
     complaint?.assignedTo || DEMO_DEPARTMENTS[0].leadOfficer
   );
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadData = async () => {
+      try {
+        const fetched = await fetchComplaintById(complaintId);
+        if (isMounted && fetched) {
+          setComplaint(fetched);
+          setSelectedStatus(fetched.status);
+          if (fetched.assignedDepartment) {
+            setSelectedDepartment(fetched.assignedDepartment);
+          }
+          if (fetched.assignedTo) {
+            setSelectedOfficer(fetched.assignedTo);
+          }
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, [complaintId, fetchComplaintById]);
+
+  if (isLoading) {
+    return (
+      <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <LoadingSkeleton type="text" count={3} />
+        <LoadingSkeleton type="card" count={2} />
+      </div>
+    );
+  }
 
   if (!complaint) {
     return (
@@ -62,15 +104,54 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
     );
   }
 
-  const handleUpdateStatus = (e: React.FormEvent) => {
+  const handleUpdateStatus = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateStatus(complaint.id, selectedStatus, statusNotes.trim() || undefined, selectedDepartment);
-    setStatusNotes('');
+    setIsUpdatingStatus(true);
+    try {
+      const success = await updateStatus(
+        complaint.id,
+        selectedStatus,
+        statusNotes.trim() || undefined,
+        selectedDepartment
+      );
+      if (success) {
+        setStatusNotes('');
+        const fresh = await fetchComplaintById(complaint.id);
+        if (fresh) {
+          setComplaint(fresh);
+          setSelectedStatus(fresh.status);
+        }
+      }
+    } finally {
+      setIsUpdatingStatus(false);
+    }
   };
 
-  const handleAssignDepartment = (e: React.FormEvent) => {
+  const handleAssignDepartment = async (e: React.FormEvent) => {
     e.preventDefault();
-    assignOfficer(complaint.id, selectedDepartment, selectedOfficer);
+    setIsAssigning(true);
+    try {
+      const success = await assignOfficer(
+        complaint.id,
+        selectedDepartment,
+        selectedOfficer
+      );
+      if (success) {
+        const fresh = await fetchComplaintById(complaint.id);
+        if (fresh) setComplaint(fresh);
+      }
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  const handleAddComment = async (msg: string, isInternal?: boolean): Promise<boolean> => {
+    const success = await addComment(complaint.id, msg, isInternal);
+    if (success) {
+      const fresh = await fetchComplaintById(complaint.id);
+      if (fresh) setComplaint(fresh);
+    }
+    return success;
   };
 
   const handleDeptChange = (deptName: string) => {
@@ -271,6 +352,7 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
                 type="submit"
                 variant="primary"
                 size="md"
+                isLoading={isUpdatingStatus}
                 style={{ width: '100%' }}
                 rightIcon={<CheckCircle2 size={16} />}
               >
@@ -320,6 +402,7 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
                 type="submit"
                 variant="secondary"
                 size="md"
+                isLoading={isAssigning}
                 style={{ width: '100%' }}
               >
                 Save Officer Assignment
@@ -383,7 +466,7 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
             <CommentSection
               complaintId={complaint.id}
               comments={complaint.comments}
-              onAddComment={(msg, isInternal) => addComment(complaint.id, msg, isInternal)}
+              onAddComment={handleAddComment}
             />
           </Card>
         </div>

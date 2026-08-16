@@ -1,16 +1,34 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { Complaint, ComplaintStatus, Priority, Notification, UserRole } from '../types';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from 'react';
+import type {
+  Complaint,
+  ComplaintStatus,
+  Priority,
+  Notification,
+  UserRole,
+} from '../types';
 import { storage } from '../utils/storage';
+import { complaintsApi } from '../api/complaintsApi';
+import { notificationsApi } from '../api/notificationsApi';
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
 
-interface ComplaintContextType {
+export interface ComplaintContextType {
   complaints: Complaint[];
   notifications: Notification[];
   unreadNotificationCount: number;
   loading: boolean;
-  refreshComplaints: () => void;
+  isApiMode: boolean;
+  providerError: string | null;
+  refreshComplaints: () => Promise<void>;
   getComplaintById: (id: string) => Complaint | undefined;
+  fetchComplaintById: (id: string) => Promise<Complaint | undefined>;
   createComplaint: (data: {
     title: string;
     description: string;
@@ -18,15 +36,23 @@ interface ComplaintContextType {
     location: string;
     priority: Priority;
     attachments?: any[];
-  }) => Complaint;
+  }) => Promise<Complaint>;
   updateStatus: (
     complaintId: string,
     newStatus: ComplaintStatus,
     notes?: string,
     department?: string
-  ) => boolean;
-  assignOfficer: (complaintId: string, department: string, officer: string) => boolean;
-  addComment: (complaintId: string, message: string, isInternal?: boolean) => boolean;
+  ) => Promise<boolean>;
+  assignOfficer: (
+    complaintId: string,
+    department: string,
+    officer: string
+  ) => Promise<boolean>;
+  addComment: (
+    complaintId: string,
+    message: string,
+    isInternal?: boolean
+  ) => Promise<boolean>;
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
   exportCSV: (filteredList?: Complaint[]) => void;
@@ -34,146 +60,423 @@ interface ComplaintContextType {
 
 const ComplaintContext = createContext<ComplaintContextType | undefined>(undefined);
 
-export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const DATA_PROVIDER_MODE = (
+  import.meta.env.VITE_DATA_PROVIDER || 'api'
+).toLowerCase();
+
+export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const { user } = useAuth();
-  const { success, error: toastError } = useToast();
-  const [complaints, setComplaints] = useState<Complaint[]>(() => storage.getComplaints());
-  const [notifications, setNotifications] = useState<Notification[]>(() => storage.getNotifications());
-  const [loading] = useState<boolean>(false);
+  const { success, error: toastError, info } = useToast();
 
-  const refreshComplaints = useCallback(() => {
-    setComplaints(storage.getComplaints());
-    setNotifications(storage.getNotifications());
-  }, []);
+  const isApiMode = DATA_PROVIDER_MODE !== 'local';
+  const [complaints, setComplaints] = useState<Complaint[]>(() =>
+    isApiMode ? [] : storage.getComplaints()
+  );
+  const [notifications, setNotifications] = useState<Notification[]>(() =>
+    isApiMode ? [] : storage.getNotifications()
+  );
+  const [loading, setLoading] = useState<boolean>(isApiMode);
+  const [providerError, setProviderError] = useState<string | null>(null);
 
-  // Listen for storage events (e.g. across multi-tab or updates)
+  const isInitialMount = useRef(true);
+
+  // Refresh complaints and notifications from API or LocalStorage
+  const refreshComplaints = useCallback(async (): Promise<void> => {
+    if (!isApiMode) {
+      setComplaints(storage.getComplaints());
+      setNotifications(storage.getNotifications());
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setProviderError(null);
+
+      const [apiComplaints, apiNotifs] = await Promise.all([
+        complaintsApi.getComplaints(),
+        notificationsApi.getNotifications(user?.id),
+      ]);
+
+      setComplaints(apiComplaints);
+      setNotifications(apiNotifs);
+    } catch (err: any) {
+      console.warn('CampusCare API unavailable, falling back to local cache:', err);
+      setProviderError(err?.message || 'API unavailable');
+
+      // Fallback to local storage
+      const localComplaints = storage.getComplaints();
+      const localNotifs = storage.getNotifications(user?.id);
+      setComplaints(localComplaints);
+      setNotifications(localNotifs);
+
+      if (isInitialMount.current) {
+        info(
+          'Connecting to local fallback storage',
+          'CampusCare REST API is running in fallback mode.'
+        );
+      }
+    } finally {
+      setLoading(false);
+      isInitialMount.current = false;
+    }
+  }, [isApiMode, user?.id, info]);
+
+  // Initial load
   useEffect(() => {
-    const handleStorageChange = () => {
-      refreshComplaints();
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    refreshComplaints();
   }, [refreshComplaints]);
+
+  // Listen for storage events (multi-tab support in local mode)
+  useEffect(() => {
+    if (!isApiMode) {
+      const handleStorageChange = () => {
+        refreshComplaints();
+      };
+      window.addEventListener('storage', handleStorageChange);
+      return () => window.removeEventListener('storage', handleStorageChange);
+    }
+  }, [isApiMode, refreshComplaints]);
 
   const getComplaintById = useCallback(
     (id: string): Complaint | undefined => {
-      return complaints.find((c) => c.id.toLowerCase() === id.toLowerCase());
+      const cleanId = id.trim().toLowerCase();
+      return complaints.find((c) => c.id.toLowerCase() === cleanId);
     },
     [complaints]
   );
 
-  const createComplaint = (data: {
+  const fetchComplaintById = useCallback(
+    async (id: string): Promise<Complaint | undefined> => {
+      if (!isApiMode) {
+        return storage.getComplaintById(id);
+      }
+
+      try {
+        const fetched = await complaintsApi.getComplaintById(id);
+        if (fetched) {
+          // Update local state cache
+          setComplaints((prev) => {
+            const index = prev.findIndex(
+              (c) => c.id.toLowerCase() === id.toLowerCase()
+            );
+            if (index >= 0) {
+              const updated = [...prev];
+              updated[index] = fetched;
+              return updated;
+            }
+            return [fetched, ...prev];
+          });
+        }
+        return fetched;
+      } catch (err) {
+        console.warn(`Failed to fetch complaint #${id} from API, using cached:`, err);
+        return getComplaintById(id);
+      }
+    },
+    [isApiMode, getComplaintById]
+  );
+
+  const createComplaint = async (data: {
     title: string;
     description: string;
     category: any;
     location: string;
     priority: Priority;
     attachments?: any[];
-  }): Complaint => {
-    try {
-      const studentName = user?.name || 'Harmanpreet Singh';
-      const studentId = user?.id || 'user-student-1';
-      const studentRollNo = user?.rollNo || 'PUP2024-CS-042';
-      const studentDepartment = user?.department || 'Computer Science & Engineering';
+  }): Promise<Complaint> => {
+    const studentName = user?.name || 'Harmanpreet Singh';
+    const studentId = user?.id || 'user-student-1';
+    const studentRollNo = user?.rollNo || 'PUP2024-CS-042';
+    const studentDepartment =
+      user?.department || 'Department of Computer Science & Engineering';
 
-      const newComplaint = storage.saveComplaint({
-        title: data.title,
-        description: data.description,
-        category: data.category,
-        location: data.location,
-        priority: data.priority,
-        attachments: data.attachments || [],
-        studentId,
-        studentName,
-        studentRollNo,
-        studentDepartment,
-      });
+    if (isApiMode) {
+      try {
+        const newComplaint = await complaintsApi.createComplaint({
+          title: data.title.trim(),
+          description: data.description.trim(),
+          category: data.category,
+          location: data.location.trim(),
+          priority: data.priority,
+          attachments: data.attachments || [],
+          studentId,
+          studentName,
+          studentRollNo,
+          studentDepartment,
+        });
 
-      refreshComplaints();
-      success('Complaint Submitted Successfully!', `Reference ID: ${newComplaint.id}`);
-      return newComplaint;
-    } catch (err) {
-      toastError('Failed to submit complaint', 'Please check required fields.');
-      throw err;
+        // Update state in memory
+        setComplaints((prev) => [newComplaint, ...prev]);
+
+        // Refresh notifications
+        try {
+          const freshNotifs = await notificationsApi.getNotifications(user?.id);
+          setNotifications(freshNotifs);
+        } catch {
+          // Ignore notification refresh error
+        }
+
+        success(
+          'Complaint Submitted Successfully!',
+          `Reference ID: ${newComplaint.id}`
+        );
+        return newComplaint;
+      } catch (err: any) {
+        console.error('API submit complaint failed, trying fallback:', err);
+        toastError('Failed to submit complaint via API', err?.message || 'Error');
+        throw err;
+      }
+    } else {
+      // Local mode
+      try {
+        const newComplaint = storage.saveComplaint({
+          title: data.title,
+          description: data.description,
+          category: data.category,
+          location: data.location,
+          priority: data.priority,
+          attachments: data.attachments || [],
+          studentId,
+          studentName,
+          studentRollNo,
+          studentDepartment,
+        });
+
+        refreshComplaints();
+        success(
+          'Complaint Submitted Successfully!',
+          `Reference ID: ${newComplaint.id}`
+        );
+        return newComplaint;
+      } catch (err) {
+        toastError('Failed to submit complaint', 'Please check required fields.');
+        throw err;
+      }
     }
   };
 
-  const updateStatus = (
+  const updateStatus = async (
     complaintId: string,
     newStatus: ComplaintStatus,
     notes?: string,
     department?: string
-  ): boolean => {
-    try {
-      const adminInfo = {
-        name: user?.name || 'Campus Administrator',
-        role: (user?.role || 'admin') as UserRole,
-      };
+  ): Promise<boolean> => {
+    const adminUser = {
+      name: user?.name || 'Campus Administrator',
+      role: (user?.role || 'admin') as UserRole,
+    };
 
-      const updated = storage.updateComplaintStatus(
-        complaintId,
-        newStatus,
-        adminInfo,
-        notes,
-        department
-      );
+    if (isApiMode) {
+      try {
+        const updated = await complaintsApi.updateStatus(complaintId, {
+          status: newStatus,
+          notes,
+          department,
+          updatedBy: adminUser.name,
+          role: adminUser.role,
+        });
 
-      if (updated) {
-        refreshComplaints();
-        success('Status Updated', `Complaint ${complaintId} is now ${newStatus}`);
-        return true;
+        if (updated) {
+          setComplaints((prev) =>
+            prev.map((c) =>
+              c.id.toLowerCase() === complaintId.toLowerCase() ? updated : c
+            )
+          );
+
+          // Refresh notifications
+          try {
+            const freshNotifs = await notificationsApi.getNotifications(user?.id);
+            setNotifications(freshNotifs);
+          } catch {
+            // Ignore
+          }
+
+          success(
+            'Status Updated',
+            `Complaint ${complaintId} is now ${newStatus}`
+          );
+          return true;
+        }
+        return false;
+      } catch (err: any) {
+        toastError('Error updating status', err?.message || 'Failed to update status');
+        return false;
       }
-      return false;
-    } catch {
-      toastError('Error updating status');
-      return false;
+    } else {
+      try {
+        const updated = storage.updateComplaintStatus(
+          complaintId,
+          newStatus,
+          adminUser,
+          notes,
+          department
+        );
+
+        if (updated) {
+          refreshComplaints();
+          success(
+            'Status Updated',
+            `Complaint ${complaintId} is now ${newStatus}`
+          );
+          return true;
+        }
+        return false;
+      } catch {
+        toastError('Error updating status');
+        return false;
+      }
     }
   };
 
-  const assignOfficer = (complaintId: string, department: string, officer: string): boolean => {
-    try {
-      const adminInfo = {
-        name: user?.name || 'Campus Administrator',
-        role: (user?.role || 'admin') as UserRole,
-      };
+  const assignOfficer = async (
+    complaintId: string,
+    department: string,
+    officer: string
+  ): Promise<boolean> => {
+    const adminUser = {
+      name: user?.name || 'Campus Administrator',
+      role: (user?.role || 'admin') as UserRole,
+    };
 
-      const updated = storage.assignComplaint(complaintId, department, officer, adminInfo);
-      if (updated) {
-        refreshComplaints();
-        success('Officer Assigned', `${officer} (${department}) assigned to ${complaintId}`);
-        return true;
+    if (isApiMode) {
+      try {
+        const updated = await complaintsApi.patchComplaint(complaintId, {
+          assignedDepartment: department,
+          assignedTo: officer,
+        });
+
+        if (updated) {
+          setComplaints((prev) =>
+            prev.map((c) =>
+              c.id.toLowerCase() === complaintId.toLowerCase() ? updated : c
+            )
+          );
+
+          // Refresh notifications
+          try {
+            const freshNotifs = await notificationsApi.getNotifications(user?.id);
+            setNotifications(freshNotifs);
+          } catch {
+            // Ignore
+          }
+
+          success(
+            'Officer Assigned',
+            `${officer} (${department}) assigned to ${complaintId}`
+          );
+          return true;
+        }
+        return false;
+      } catch (err: any) {
+        toastError('Error assigning officer', err?.message || 'Failed');
+        return false;
       }
-      return false;
-    } catch {
-      toastError('Error assigning officer');
-      return false;
+    } else {
+      try {
+        const updated = storage.assignComplaint(
+          complaintId,
+          department,
+          officer,
+          adminUser
+        );
+        if (updated) {
+          refreshComplaints();
+          success(
+            'Officer Assigned',
+            `${officer} (${department}) assigned to ${complaintId}`
+          );
+          return true;
+        }
+        return false;
+      } catch {
+        toastError('Error assigning officer');
+        return false;
+      }
     }
   };
 
-  const addComment = (complaintId: string, message: string, isInternal: boolean = false): boolean => {
+  const addComment = async (
+    complaintId: string,
+    message: string,
+    isInternal: boolean = false
+  ): Promise<boolean> => {
     if (!user) return false;
-    try {
-      const comment = storage.addComment(complaintId, user, message, isInternal);
-      if (comment) {
-        refreshComplaints();
-        success('Comment Posted');
-        return true;
+
+    if (isApiMode) {
+      try {
+        const result = await complaintsApi.addComment(complaintId, {
+          message: message.trim(),
+          userId: user.id,
+          userName: user.name,
+          userRole: user.role,
+          isInternal,
+          avatar: user.avatar,
+        });
+
+        if (result?.complaint) {
+          setComplaints((prev) =>
+            prev.map((c) =>
+              c.id.toLowerCase() === complaintId.toLowerCase()
+                ? result.complaint
+                : c
+            )
+          );
+
+          // Refresh notifications
+          try {
+            const freshNotifs = await notificationsApi.getNotifications(user?.id);
+            setNotifications(freshNotifs);
+          } catch {
+            // Ignore
+          }
+
+          success('Comment Posted');
+          return true;
+        }
+        return false;
+      } catch (err: any) {
+        toastError('Failed to post comment', err?.message || 'Error');
+        return false;
       }
-      return false;
-    } catch {
-      toastError('Failed to post comment');
-      return false;
+    } else {
+      try {
+        const comment = storage.addComment(
+          complaintId,
+          user,
+          message,
+          isInternal
+        );
+        if (comment) {
+          refreshComplaints();
+          success('Comment Posted');
+          return true;
+        }
+        return false;
+      } catch {
+        toastError('Failed to post comment');
+        return false;
+      }
     }
   };
 
   const markNotificationRead = (id: string) => {
-    storage.markNotificationAsRead(id);
-    refreshComplaints();
+    // In memory & storage
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+    if (!isApiMode) {
+      storage.markNotificationAsRead(id);
+    }
   };
 
   const markAllNotificationsRead = () => {
-    storage.markAllNotificationsAsRead(user?.id);
-    refreshComplaints();
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    if (!isApiMode) {
+      storage.markAllNotificationsAsRead(user?.id);
+    }
     success('Notifications Marked as Read');
   };
 
@@ -186,7 +489,12 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const userNotifications = notifications.filter((n) => {
     if (!user) return true;
     if (user.role === 'admin') {
-      return n.userId === user.id || n.userId === 'all' || n.type === 'urgent' || n.type === 'system';
+      return (
+        n.userId === user.id ||
+        n.userId === 'all' ||
+        n.type === 'urgent' ||
+        (n as any).type === 'system'
+      );
     }
     return n.userId === user.id || n.userId === 'all';
   });
@@ -200,8 +508,11 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         notifications: userNotifications,
         unreadNotificationCount,
         loading,
+        isApiMode,
+        providerError,
         refreshComplaints,
         getComplaintById,
+        fetchComplaintById,
         createComplaint,
         updateStatus,
         assignOfficer,

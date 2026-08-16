@@ -2,14 +2,14 @@ import { Request, Response, NextFunction } from 'express';
 import { notificationService } from '../services/notificationService.js';
 import { ApiResponse, Notification } from '../types/index.js';
 
-export const getNotifications = (
+export const getNotifications = async (
   req: Request,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   try {
     const userId = req.query.userId as string | undefined;
-    const notifications = notificationService.getAll(userId);
+    const notifications = await notificationService.getAll(userId);
 
     const response: ApiResponse<Notification[]> = {
       success: true,

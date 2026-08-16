@@ -9,6 +9,7 @@ import type { FilterState } from '../../components/common/FilterBar';
 import { Button } from '../../components/common/Button';
 import { PlusCircle, LayoutGrid, List } from 'lucide-react';
 import { EmptyState } from '../../components/common/EmptyState';
+import { LoadingSkeleton } from '../../components/common/LoadingSkeleton';
 
 interface MyComplaintsProps {
   onNavigate: (path: string) => void;
@@ -17,7 +18,7 @@ interface MyComplaintsProps {
 
 export const MyComplaints: React.FC<MyComplaintsProps> = ({ onNavigate, initialTab = 'all' }) => {
   const { user } = useAuth();
-  const { complaints } = useComplaints();
+  const { complaints, loading } = useComplaints();
 
   // Active student complaints only
   const studentComplaints = complaints.filter(
@@ -236,7 +237,9 @@ export const MyComplaints: React.FC<MyComplaintsProps> = ({ onNavigate, initialT
       </div>
 
       {/* Complaints List / Grid */}
-      {filteredComplaints.length === 0 ? (
+      {loading && studentComplaints.length === 0 ? (
+        <LoadingSkeleton type="card" count={3} />
+      ) : filteredComplaints.length === 0 ? (
         <EmptyState
           title="No complaints found"
           description={

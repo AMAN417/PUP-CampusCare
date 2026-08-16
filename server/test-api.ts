@@ -1,5 +1,8 @@
 import { createApp } from './src/app.js';
 import { Server } from 'http';
+import { config, isSupabaseConfigured, getDataProvider } from './src/config/environment.js';
+import { repositoryRegistry } from './src/repositories/index.js';
+import { verifySupabaseConnection } from './src/database/verifyConnection.js';
 
 const TEST_PORT = 5055;
 const BASE_URL = `http://localhost:${TEST_PORT}/api/campuscare`;
@@ -14,19 +17,44 @@ interface TestResult {
 const results: TestResult[] = [];
 
 const runTests = async () => {
+  console.log('\n======================================================================');
+  console.log('  🔍 ENVIRONMENT & CONFIGURATION VERIFICATION');
+  console.log('======================================================================');
+  console.log(`• DATA_PROVIDER:             ${getDataProvider()}`);
+  console.log(`• SUPABASE_URL configured:    ${Boolean(config.SUPABASE_URL && config.SUPABASE_URL.length > 0)}`);
+  console.log(`• SUPABASE_KEY configured:    ${Boolean((config.SUPABASE_ANON_KEY || config.SUPABASE_SERVICE_ROLE_KEY) && (config.SUPABASE_ANON_KEY || config.SUPABASE_SERVICE_ROLE_KEY).length > 0)}`);
+  console.log(`• isSupabaseConfigured:       ${isSupabaseConfigured()}`);
+  console.log(`• NODE_ENV:                   ${config.NODE_ENV}`);
+  console.log('======================================================================\n');
+
+  if (getDataProvider() === 'supabase') {
+    console.log('Testing Supabase connectivity...');
+    const connected = await verifySupabaseConnection();
+    if (!connected) {
+      console.warn('\n⚠️ Supabase connection failed or tables do not exist yet in your Supabase project.');
+      console.warn('ℹ️ Please execute "server/src/database/schema.sql" in your Supabase SQL Editor.');
+      console.warn('ℹ️ Running test suite in In-Memory provider mode for validation...\n');
+      process.env.DATA_PROVIDER = 'memory';
+      repositoryRegistry.resetForTesting();
+    }
+  }
+
   const app = createApp();
   const server: Server = await new Promise((resolve) => {
     const s = app.listen(TEST_PORT, () => resolve(s));
   });
 
-  console.log(`\n🧪 Running PUP CampusCare API Test Suite on port ${TEST_PORT}...\n`);
+  console.log(`\n🧪 Running PUP CampusCare API Test Suite on port ${TEST_PORT} (Provider: ${getDataProvider()})...\n`);
 
   try {
     // 1. Health Check
     {
       const res = await fetch(`${BASE_URL}/health`);
-      const body = await res.json() as any;
-      const passed = res.status === 200 && body.success === true && body.data?.status === 'UP';
+      const body = (await res.json()) as any;
+      const passed =
+        res.status === 200 &&
+        body.success === true &&
+        body.data?.status === 'UP';
       results.push({
         name: 'GET /api/campuscare/health (Health check)',
         passed,
@@ -38,8 +66,12 @@ const runTests = async () => {
     // 2. List Complaints
     {
       const res = await fetch(`${BASE_URL}/complaints`);
-      const body = await res.json() as any;
-      const passed = res.status === 200 && body.success === true && Array.isArray(body.data) && body.data.length >= 5;
+      const body = (await res.json()) as any;
+      const passed =
+        res.status === 200 &&
+        body.success === true &&
+        Array.isArray(body.data) &&
+        body.data.length >= 5;
       results.push({
         name: 'GET /api/campuscare/complaints (List complaints)',
         passed,
@@ -51,8 +83,11 @@ const runTests = async () => {
     // 3. Single Complaint Lookup
     {
       const res = await fetch(`${BASE_URL}/complaints/PUP-2026-0101`);
-      const body = await res.json() as any;
-      const passed = res.status === 200 && body.success === true && body.data?.id === 'PUP-2026-0101';
+      const body = (await res.json()) as any;
+      const passed =
+        res.status === 200 &&
+        body.success === true &&
+        body.data?.id === 'PUP-2026-0101';
       results.push({
         name: 'GET /api/campuscare/complaints/PUP-2026-0101 (Get single complaint)',
         passed,
@@ -66,7 +101,8 @@ const runTests = async () => {
     {
       const payload = {
         title: 'Water Cooler Filter Replacement in Library Ground Floor',
-        description: 'The drinking water cooler in the central library reading hall is dispensing cloudy water with high TDS. Filter needs replacement.',
+        description:
+          'The drinking water cooler in the central library reading hall is dispensing cloudy water with high TDS. Filter needs replacement.',
         category: 'Water',
         location: 'Bhai Kahn Singh Nabha Central Library - Ground Floor',
         priority: 'Medium',
@@ -79,9 +115,12 @@ const runTests = async () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      const body = await res.json() as any;
+      const body = (await res.json()) as any;
       createdId = body.data?.id || '';
-      const passed = res.status === 201 && body.success === true && createdId.startsWith('PUP-');
+      const passed =
+        res.status === 201 &&
+        body.success === true &&
+        createdId.startsWith('PUP-');
       results.push({
         name: 'POST /api/campuscare/complaints (Submit new complaint)',
         passed,
@@ -103,7 +142,7 @@ const runTests = async () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(patchPayload),
       });
-      const body = await res.json() as any;
+      const body = (await res.json()) as any;
       const passed =
         res.status === 200 &&
         body.success === true &&
@@ -131,7 +170,7 @@ const runTests = async () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(statusPayload),
       });
-      const body = await res.json() as any;
+      const body = (await res.json()) as any;
       const passed =
         res.status === 200 &&
         body.success === true &&
@@ -148,7 +187,8 @@ const runTests = async () => {
     // 7. Add Comment
     if (createdId) {
       const commentPayload = {
-        message: 'Technician has collected water sample for laboratory testing.',
+        message:
+          'Technician has collected water sample for laboratory testing.',
         userName: 'Er. Gurpreet Singh (WSPH)',
         userRole: 'admin',
         isInternal: false,
@@ -159,7 +199,7 @@ const runTests = async () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(commentPayload),
       });
-      const body = await res.json() as any;
+      const body = (await res.json()) as any;
       const passed =
         res.status === 201 &&
         body.success === true &&
@@ -175,8 +215,12 @@ const runTests = async () => {
     // 8. Notifications List
     {
       const res = await fetch(`${BASE_URL}/notifications`);
-      const body = await res.json() as any;
-      const passed = res.status === 200 && body.success === true && Array.isArray(body.data) && body.data.length >= 3;
+      const body = (await res.json()) as any;
+      const passed =
+        res.status === 200 &&
+        body.success === true &&
+        Array.isArray(body.data) &&
+        body.data.length >= 3;
       results.push({
         name: 'GET /api/campuscare/notifications (List notifications)',
         passed,
@@ -185,7 +229,7 @@ const runTests = async () => {
       });
     }
 
-    // 9. Negative Test 1: Invalid Status Transition (Under Review -> Resolved directly is rejected)
+    // 9. Negative Test 1: Invalid Status Transition
     if (createdId) {
       const invalidStatusPayload = {
         status: 'Resolved', // Invalid jump (must go to Assigned -> In Progress first)
@@ -196,8 +240,11 @@ const runTests = async () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(invalidStatusPayload),
       });
-      const body = await res.json() as any;
-      const passed = res.status === 400 && body.success === false && body.error?.includes('Invalid status transition');
+      const body = (await res.json()) as any;
+      const passed =
+        res.status === 400 &&
+        body.success === false &&
+        body.error?.includes('Invalid status transition');
       results.push({
         name: 'Negative Test: Invalid status lifecycle jump (Expected 400 Bad Request)',
         passed,
@@ -212,7 +259,6 @@ const runTests = async () => {
         title: 'A', // Too short
         category: 'InvalidCategory', // Invalid enum
         location: '', // Missing
-        // Missing priority and description
       };
 
       const res = await fetch(`${BASE_URL}/complaints`, {
@@ -220,8 +266,12 @@ const runTests = async () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(invalidPayload),
       });
-      const body = await res.json() as any;
-      const passed = res.status === 400 && body.success === false && Array.isArray(body.errors) && body.errors.length >= 3;
+      const body = (await res.json()) as any;
+      const passed =
+        res.status === 400 &&
+        body.success === false &&
+        Array.isArray(body.errors) &&
+        body.errors.length >= 3;
       results.push({
         name: 'Negative Test: Validation schema error with multiple fields (Expected 400 Bad Request)',
         passed,
@@ -233,8 +283,11 @@ const runTests = async () => {
     // 11. Negative Test 3: Non-existent Complaint ID (404)
     {
       const res = await fetch(`${BASE_URL}/complaints/PUP-2026-9999`);
-      const body = await res.json() as any;
-      const passed = res.status === 404 && body.success === false && body.error?.includes('not found');
+      const body = (await res.json()) as any;
+      const passed =
+        res.status === 404 &&
+        body.success === false &&
+        body.error?.includes('not found');
       results.push({
         name: 'Negative Test: Nonexistent complaint ID lookup (Expected 404 Not Found)',
         passed,
@@ -246,8 +299,11 @@ const runTests = async () => {
     // 12. Negative Test 4: Malformed Complaint ID format
     {
       const res = await fetch(`${BASE_URL}/complaints/invalid*id!%23`);
-      const body = await res.json() as any;
-      const passed = res.status === 400 && body.success === false && body.error?.includes('Invalid complaint ID format');
+      const body = (await res.json()) as any;
+      const passed =
+        res.status === 400 &&
+        body.success === false &&
+        body.error?.includes('Invalid complaint ID format');
       results.push({
         name: 'Negative Test: Malformed complaint ID format (Expected 400 Bad Request)',
         passed,
@@ -255,7 +311,6 @@ const runTests = async () => {
         details: `Error returned: "${body.error}"`,
       });
     }
-
   } finally {
     await new Promise<void>((resolve, reject) => {
       server.close((err) => (err ? reject(err) : resolve()));
@@ -279,7 +334,9 @@ const runTests = async () => {
     console.error('\n❌ Some API tests failed.');
     process.exit(1);
   } else {
-    console.log(`\n🎉 All ${results.length} API test cases passed successfully!`);
+    console.log(
+      `\n🎉 All ${results.length} API test cases passed successfully!`
+    );
   }
 };
 

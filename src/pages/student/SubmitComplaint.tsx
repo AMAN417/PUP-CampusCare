@@ -105,13 +105,13 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
     setAttachments((prev) => prev.filter((a) => a.id !== id));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !description.trim() || !location.trim()) return;
 
     setIsSubmitting(true);
     try {
-      const created = createComplaint({
+      const created = await createComplaint({
         title: title.trim(),
         category,
         location: location.trim(),
@@ -120,7 +120,9 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
         attachments,
       });
 
-      setCreatedComplaintId(created.id);
+      if (created?.id) {
+        setCreatedComplaintId(created.id);
+      }
     } catch (err) {
       console.error('Error submitting:', err);
     } finally {

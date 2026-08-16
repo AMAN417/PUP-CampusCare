@@ -9,11 +9,11 @@ import {
   Priority,
 } from '../types/index.js';
 
-export const getComplaints = (
+export const getComplaints = async (
   req: Request,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   try {
     const filters: ComplaintFilterOptions = {
       category: req.query.category as ComplaintCategory | undefined,
@@ -23,7 +23,7 @@ export const getComplaints = (
       studentId: req.query.studentId as string | undefined,
     };
 
-    const complaints = complaintService.getAll(filters);
+    const complaints = await complaintService.getAll(filters);
 
     const response: ApiResponse<Complaint[]> = {
       success: true,
@@ -38,14 +38,14 @@ export const getComplaints = (
   }
 };
 
-export const getComplaintById = (
+export const getComplaintById = async (
   req: Request,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const complaint = complaintService.getById(id);
+    const complaint = await complaintService.getById(id);
 
     const response: ApiResponse<Complaint> = {
       success: true,
@@ -59,13 +59,13 @@ export const getComplaintById = (
   }
 };
 
-export const createComplaint = (
+export const createComplaint = async (
   req: Request,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   try {
-    const newComplaint = complaintService.create(req.body);
+    const newComplaint = await complaintService.create(req.body);
 
     const response: ApiResponse<Complaint> = {
       success: true,
@@ -80,14 +80,14 @@ export const createComplaint = (
   }
 };
 
-export const patchComplaint = (
+export const patchComplaint = async (
   req: Request,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const updated = complaintService.patch(id, req.body);
+    const updated = await complaintService.patch(id, req.body);
 
     const response: ApiResponse<Complaint> = {
       success: true,
@@ -102,15 +102,15 @@ export const patchComplaint = (
   }
 };
 
-export const updateComplaintStatus = (
+export const updateComplaintStatus = async (
   req: Request,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   try {
     const id = req.params.id as string;
     const { status, notes, department, updatedBy, role } = req.body;
-    const updated = complaintService.updateStatus(
+    const updated = await complaintService.updateStatus(
       id,
       status,
       notes,
@@ -132,14 +132,14 @@ export const updateComplaintStatus = (
   }
 };
 
-export const addComplaintComment = (
+export const addComplaintComment = async (
   req: Request,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const { comment, complaint } = complaintService.addComment(
+    const { comment, complaint } = await complaintService.addComment(
       id,
       req.body
     );

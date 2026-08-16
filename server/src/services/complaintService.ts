@@ -1,23 +1,22 @@
-import {
+import type {
   Complaint,
-  ComplaintCategory,
   ComplaintStatus,
-  Priority,
   Comment,
-  StatusHistory,
   UserRole,
 } from '../types/index.js';
-import { INITIAL_COMPLAINTS } from '../data/initialData.js';
+import {
+  getComplaintRepository,
+} from '../repositories/index.js';
+import type {
+  ComplaintFilterOptions,
+  CreateComplaintDto,
+  PatchComplaintDto,
+  AddCommentDto,
+} from '../repositories/index.js';
 import { notificationService } from './notificationService.js';
 import { AppError } from '../middleware/errorHandler.js';
 
-export interface ComplaintFilterOptions {
-  category?: ComplaintCategory;
-  status?: ComplaintStatus;
-  priority?: Priority;
-  search?: string;
-  studentId?: string;
-}
+export type { ComplaintFilterOptions };
 
 // Strict lifecycle transitions
 const ALLOWED_TRANSITIONS: Record<ComplaintStatus, ComplaintStatus[]> = {
@@ -30,49 +29,14 @@ const ALLOWED_TRANSITIONS: Record<ComplaintStatus, ComplaintStatus[]> = {
 };
 
 export class ComplaintService {
-  private complaints: Complaint[] = JSON.parse(JSON.stringify(INITIAL_COMPLAINTS));
-
-  public getAll(filters: ComplaintFilterOptions = {}): Complaint[] {
-    let result = [...this.complaints];
-
-    if (filters.category) {
-      result = result.filter((c) => c.category === filters.category);
-    }
-
-    if (filters.status) {
-      result = result.filter((c) => c.status === filters.status);
-    }
-
-    if (filters.priority) {
-      result = result.filter((c) => c.priority === filters.priority);
-    }
-
-    if (filters.studentId) {
-      result = result.filter((c) => c.studentId === filters.studentId);
-    }
-
-    if (filters.search && filters.search.trim()) {
-      const q = filters.search.trim().toLowerCase();
-      result = result.filter(
-        (c) =>
-          c.title.toLowerCase().includes(q) ||
-          c.id.toLowerCase().includes(q) ||
-          c.location.toLowerCase().includes(q) ||
-          c.description.toLowerCase().includes(q) ||
-          c.studentName.toLowerCase().includes(q) ||
-          (c.studentRollNo && c.studentRollNo.toLowerCase().includes(q))
-      );
-    }
-
-    return result.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+  public async getAll(filters: ComplaintFilterOptions = {}): Promise<Complaint[]> {
+    const repo = getComplaintRepository();
+    return repo.getAll(filters);
   }
 
-  public getById(id: string): Complaint {
-    const complaint = this.complaints.find(
-      (c) => c.id.toUpperCase() === id.trim().toUpperCase()
-    );
+  public async getById(id: string): Promise<Complaint> {
+    const repo = getComplaintRepository();
+    const complaint = await repo.getById(id);
 
     if (!complaint) {
       throw new AppError(`Complaint with ID '${id}' was not found.`, 404);
@@ -81,56 +45,12 @@ export class ComplaintService {
     return complaint;
   }
 
-  public create(data: {
-    title: string;
-    description: string;
-    category: ComplaintCategory;
-    location: string;
-    priority: Priority;
-    studentId?: string;
-    studentName?: string;
-    studentRollNo?: string;
-    studentDepartment?: string;
-    attachments?: { id: string; name: string; size: string; type: string; url: string; uploadedAt: string }[];
-  }): Complaint {
-    const year = new Date().getFullYear();
-    const randomSeq = Math.floor(1000 + Math.random() * 9000);
-    const complaintId = `PUP-${year}-${randomSeq}`;
-    const now = new Date().toISOString();
-
-    const initialHistory: StatusHistory = {
-      id: `hist-${Date.now()}`,
-      status: 'Submitted',
-      timestamp: now,
-      updatedBy: data.studentName || 'Student (Harmanpreet Singh)',
-      role: 'student',
-      notes: 'Initial issue reported through Punjabi University Patiala CampusCare portal.',
-    };
-
-    const newComplaint: Complaint = {
-      id: complaintId,
-      title: data.title.trim(),
-      description: data.description.trim(),
-      category: data.category,
-      location: data.location.trim(),
-      priority: data.priority,
-      status: 'Submitted',
-      createdAt: now,
-      updatedAt: now,
-      studentId: data.studentId || 'user-student-1',
-      studentName: data.studentName || 'Harmanpreet Singh',
-      studentRollNo: data.studentRollNo || 'PUP2024-CS-042',
-      studentDepartment:
-        data.studentDepartment || 'Department of Computer Science & Engineering',
-      statusHistory: [initialHistory],
-      comments: [],
-      attachments: data.attachments || [],
-    };
-
-    this.complaints.unshift(newComplaint);
+  public async create(data: CreateComplaintDto): Promise<Complaint> {
+    const repo = getComplaintRepository();
+    const newComplaint = await repo.create(data);
 
     // Create notification
-    notificationService.createNotification({
+    await notificationService.createNotification({
       userId: newComplaint.studentId,
       title: 'Complaint Submitted',
       message: `Your complaint #${newComplaint.id} has been registered and queued for triage.`,
@@ -141,35 +61,20 @@ export class ComplaintService {
     return newComplaint;
   }
 
-  public patch(
+  public async patch(
     id: string,
-    patchData: {
-      assignedDepartment?: string;
-      assignedTo?: string;
-      priority?: Priority;
-      isEscalated?: boolean;
-    }
-  ): Complaint {
-    const complaint = this.getById(id);
-    const now = new Date().toISOString();
+    patchData: PatchComplaintDto
+  ): Promise<Complaint> {
+    const complaint = await this.getById(id);
+    const repo = getComplaintRepository();
+    const updated = await repo.patch(id, patchData);
 
-    if (patchData.assignedDepartment !== undefined) {
-      complaint.assignedDepartment = patchData.assignedDepartment;
+    if (!updated) {
+      throw new AppError(`Failed to update complaint '${id}'.`, 500);
     }
-    if (patchData.assignedTo !== undefined) {
-      complaint.assignedTo = patchData.assignedTo;
-    }
-    if (patchData.priority !== undefined) {
-      complaint.priority = patchData.priority;
-    }
-    if (patchData.isEscalated !== undefined) {
-      complaint.isEscalated = patchData.isEscalated;
-    }
-
-    complaint.updatedAt = now;
 
     if (patchData.assignedTo && patchData.assignedDepartment) {
-      notificationService.createNotification({
+      await notificationService.createNotification({
         userId: complaint.studentId,
         title: 'Officer Assigned',
         message: `${patchData.assignedTo} from ${patchData.assignedDepartment} was assigned to #${complaint.id}.`,
@@ -178,18 +83,18 @@ export class ComplaintService {
       });
     }
 
-    return complaint;
+    return updated;
   }
 
-  public updateStatus(
+  public async updateStatus(
     id: string,
     newStatus: ComplaintStatus,
     notes?: string,
     department?: string,
     updatedBy?: string,
     role?: UserRole
-  ): Complaint {
-    const complaint = this.getById(id);
+  ): Promise<Complaint> {
+    const complaint = await this.getById(id);
     const currentStatus = complaint.status;
 
     // Check lifecycle transition rule
@@ -205,32 +110,21 @@ export class ComplaintService {
       }
     }
 
-    const now = new Date().toISOString();
-    complaint.status = newStatus;
-    complaint.updatedAt = now;
-
-    if (newStatus === 'Resolved' || newStatus === 'Closed') {
-      complaint.resolvedAt = now;
-    }
-
-    if (department) {
-      complaint.assignedDepartment = department;
-    }
-
-    const historyEntry: StatusHistory = {
-      id: `hist-${Date.now()}`,
+    const repo = getComplaintRepository();
+    const updated = await repo.updateStatus(id, {
       status: newStatus,
-      timestamp: now,
-      updatedBy: updatedBy || 'Campus Administrator',
-      role: role || 'admin',
-      notes: notes || `Status updated to ${newStatus}`,
-      department: department || complaint.assignedDepartment,
-    };
+      notes,
+      department,
+      updatedBy,
+      role,
+    });
 
-    complaint.statusHistory.push(historyEntry);
+    if (!updated) {
+      throw new AppError(`Failed to update status for complaint '${id}'.`, 500);
+    }
 
     // Create notification
-    notificationService.createNotification({
+    await notificationService.createNotification({
       userId: complaint.studentId,
       title: 'Status Updated',
       message: `Complaint #${complaint.id} status changed to ${newStatus}.`,
@@ -238,47 +132,32 @@ export class ComplaintService {
       complaintId: complaint.id,
     });
 
-    return complaint;
+    return updated;
   }
 
-  public addComment(
+  public async addComment(
     id: string,
-    data: {
-      message: string;
-      userId?: string;
-      userName?: string;
-      userRole?: UserRole;
-      isInternal?: boolean;
+    data: AddCommentDto
+  ): Promise<{ comment: Comment; complaint: Complaint }> {
+    const complaint = await this.getById(id);
+    const repo = getComplaintRepository();
+    const result = await repo.addComment(id, data);
+
+    if (!result) {
+      throw new AppError(`Failed to add comment to complaint '${id}'.`, 500);
     }
-  ): { comment: Comment; complaint: Complaint } {
-    const complaint = this.getById(id);
-    const now = new Date().toISOString();
-
-    const newComment: Comment = {
-      id: `comm-${Date.now()}`,
-      complaintId: complaint.id,
-      userId: data.userId || 'user-student-1',
-      userName: data.userName || 'Harmanpreet Singh',
-      userRole: data.userRole || 'student',
-      message: data.message.trim(),
-      timestamp: now,
-      isInternal: data.isInternal || false,
-    };
-
-    complaint.comments.push(newComment);
-    complaint.updatedAt = now;
 
     if (!data.isInternal) {
-      notificationService.createNotification({
+      await notificationService.createNotification({
         userId: data.userRole === 'admin' ? complaint.studentId : 'all',
         title: 'New Response on Complaint',
-        message: `${newComment.userName} commented on #${complaint.id}.`,
+        message: `${result.comment.userName} commented on #${complaint.id}.`,
         type: 'comment',
         complaintId: complaint.id,
       });
     }
 
-    return { comment: newComment, complaint };
+    return result;
   }
 }
 

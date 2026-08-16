@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useComplaints } from '../../context/ComplaintContext';
 import { StatusBadge, PriorityBadge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
@@ -6,6 +6,7 @@ import { Card } from '../../components/common/Card';
 import { Timeline } from '../../components/complaints/Timeline';
 import { CommentSection } from '../../components/complaints/CommentSection';
 import { Modal } from '../../components/common/Modal';
+import { LoadingSkeleton } from '../../components/common/LoadingSkeleton';
 import {
   ArrowLeft,
   MapPin,
@@ -18,6 +19,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { CATEGORY_METADATA } from '../../data/mockData';
+import type { Complaint } from '../../types';
 
 interface ComplaintDetailsProps {
   complaintId: string;
@@ -28,12 +30,43 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
   complaintId,
   onNavigate,
 }) => {
-  const { getComplaintById, addComment, updateStatus } = useComplaints();
+  const { getComplaintById, fetchComplaintById, addComment, updateStatus } = useComplaints();
 
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [timelineMode, setTimelineMode] = useState<'horizontal' | 'vertical'>('horizontal');
+  const [complaint, setComplaint] = useState<Complaint | undefined>(() =>
+    getComplaintById(complaintId)
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(!complaint);
+  const [isClosing, setIsClosing] = useState<boolean>(false);
 
-  const complaint = getComplaintById(complaintId);
+  useEffect(() => {
+    let isMounted = true;
+    const loadData = async () => {
+      try {
+        const fetched = await fetchComplaintById(complaintId);
+        if (isMounted && fetched) {
+          setComplaint(fetched);
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, [complaintId, fetchComplaintById]);
+
+  if (isLoading) {
+    return (
+      <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <LoadingSkeleton type="text" count={3} />
+        <LoadingSkeleton type="card" count={2} />
+      </div>
+    );
+  }
 
   if (!complaint) {
     return (
@@ -42,7 +75,7 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
           <AlertCircle size={48} style={{ color: '#DC2626', margin: '0 auto 1rem auto' }} />
           <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Complaint Not Found</h3>
           <p style={{ color: 'var(--text-secondary)', margin: '0.5rem 0 1.5rem 0' }}>
-            The complaint reference ID "{complaintId}" could not be located in local storage records.
+            The complaint reference ID "{complaintId}" could not be located in records.
           </p>
           <Button
             variant="primary"
@@ -61,14 +94,32 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
     description: '',
   };
 
-  const handleCloseComplaint = () => {
+  const handleCloseComplaint = async () => {
     if (confirm('Are you satisfied and want to mark this complaint as Closed?')) {
-      updateStatus(
-        complaint.id,
-        'Closed',
-        'Student confirmed resolution and closed ticket.'
-      );
+      setIsClosing(true);
+      try {
+        const success = await updateStatus(
+          complaint.id,
+          'Closed',
+          'Student confirmed resolution and closed ticket.'
+        );
+        if (success) {
+          const fresh = await fetchComplaintById(complaint.id);
+          if (fresh) setComplaint(fresh);
+        }
+      } finally {
+        setIsClosing(false);
+      }
     }
+  };
+
+  const handleAddComment = async (msg: string, isInternal?: boolean): Promise<boolean> => {
+    const success = await addComment(complaint.id, msg, isInternal);
+    if (success) {
+      const fresh = await fetchComplaintById(complaint.id);
+      if (fresh) setComplaint(fresh);
+    }
+    return success;
   };
 
   return (
@@ -109,6 +160,7 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
             <Button
               variant="primary"
               size="sm"
+              isLoading={isClosing}
               onClick={handleCloseComplaint}
               leftIcon={<CheckCircle2 size={15} />}
             >
@@ -372,7 +424,7 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
             <CommentSection
               complaintId={complaint.id}
               comments={complaint.comments}
-              onAddComment={(msg, isInternal) => addComment(complaint.id, msg, isInternal)}
+              onAddComment={handleAddComment}
             />
           </Card>
         </div>
