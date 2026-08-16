@@ -93,6 +93,7 @@ export interface IUserRepository {
   getById(id: string): Promise<User | null>;
   getByEmail(email: string): Promise<User | null>;
   create(user: Partial<User>): Promise<User>;
+  upsert(user: Partial<User>): Promise<User>;
 }
 
 export interface IDepartmentRepository {

@@ -111,6 +111,13 @@ export interface Department {
   resolvedComplaints: number;
 }
 
+export interface AuthResponseData {
+  user: User;
+  token: string;
+  refreshToken?: string;
+  expiresIn?: number;
+}
+
 export interface ApiResponse<T = unknown> {
   success: boolean;
   message?: string;
@@ -153,3 +160,11 @@ export const STATUS_PROGRESSION: Record<ComplaintStatus, number> = {
   Resolved: 4,
   Closed: 5,
 };
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: User;
+    }
+  }
+}

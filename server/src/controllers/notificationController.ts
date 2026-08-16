@@ -8,7 +8,8 @@ export const getNotifications = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = req.query.userId as string | undefined;
+    // Strictly scope notifications to the authenticated user's ID
+    const userId = req.user?.id;
     const notifications = await notificationService.getAll(userId);
 
     const response: ApiResponse<Notification[]> = {

@@ -43,6 +43,37 @@ export async function verifySupabaseConnection(): Promise<boolean> {
     }
 
     console.log(`✅ "complaints" table verified! Found ${complaintData?.length ?? 0} complaint records.`);
+
+    // Test write permission on complaints table
+    const testComplaintId = `TEST-PUP-${Date.now()}`;
+    const { data: testComp, error: compWriteError } = await supabase
+      .from('complaints')
+      .insert({
+        complaint_id: testComplaintId,
+        title: 'Connection Test',
+        description: 'Testing write permissions on complaints table',
+        category: 'Other',
+        location: 'Test Location',
+        priority: 'Low',
+        status: 'Submitted',
+        student_id: 'test-user',
+        student_name: 'Test Student',
+      })
+      .select()
+      .single();
+
+    if (compWriteError) {
+      console.log('⚠️ Supabase write permissions restricted on "complaints" table:', compWriteError.message);
+      console.log('ℹ️ Run "server/src/database/schema.sql" in Supabase SQL editor to grant full table write permissions.');
+      return false;
+    }
+
+    // Clean up test complaint
+    if (testComp?.id) {
+      await supabase.from('complaints').delete().eq('id', testComp.id);
+    }
+
+    console.log('✅ Supabase write permissions verified on complaints table!');
     return true;
   } catch (err: any) {
     console.log('❌ Supabase connection error:', err?.message || err);

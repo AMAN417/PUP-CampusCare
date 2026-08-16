@@ -39,4 +39,23 @@ export class MemoryUserRepository implements IUserRepository {
     this.users.push(newUser);
     return JSON.parse(JSON.stringify(newUser));
   }
+
+  public async upsert(userData: Partial<User>): Promise<User> {
+    const existingIndex = this.users.findIndex(
+      (u) =>
+        (userData.id && u.id === userData.id) ||
+        (userData.email && u.email.toLowerCase() === userData.email.toLowerCase())
+    );
+
+    if (existingIndex >= 0) {
+      const updated = {
+        ...this.users[existingIndex],
+        ...userData,
+      };
+      this.users[existingIndex] = updated as User;
+      return JSON.parse(JSON.stringify(updated));
+    }
+
+    return this.create(userData);
+  }
 }

@@ -19,29 +19,39 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
   const [role, setRole] = useState<'student' | 'admin'>('student');
   const [error, setError] = useState('');
 
-  const handleRegularLogin = (e: React.FormEvent) => {
+  const handleRegularLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
       setError('Please enter your university email or Roll number.');
       return;
     }
 
-    const ok = login(email, role);
-    if (ok) {
-      success('Logged In Successfully', `Welcome back to PUP CampusCare`);
-      onNavigate(role === 'admin' ? '/admin/dashboard' : '/student/dashboard');
-    } else {
-      setError('Invalid credentials for demo. Please use the quick demo login buttons below.');
+    try {
+      setError('');
+      const ok = await login(email, password, role);
+      if (ok) {
+        success('Logged In Successfully', `Welcome back to PUP CampusCare`);
+        onNavigate(role === 'admin' ? '/admin/dashboard' : '/student/dashboard');
+      } else {
+        setError('Invalid credentials. Please check your email and password.');
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Login failed. Please check your credentials.');
     }
   };
 
-  const handleDemoClick = (targetRole: 'student' | 'admin') => {
-    loginAsDemo(targetRole);
-    success(
-      `Switched to ${targetRole === 'student' ? 'Student Harmanpreet' : 'Admin Dr. Rajinder'}`,
-      'Demo authentication active'
-    );
-    onNavigate(targetRole === 'admin' ? '/admin/dashboard' : '/student/dashboard');
+  const handleDemoClick = async (targetRole: 'student' | 'admin') => {
+    try {
+      setError('');
+      await loginAsDemo(targetRole);
+      success(
+        `Switched to ${targetRole === 'student' ? 'Student Harmanpreet' : 'Admin Dr. Rajinder'}`,
+        'Demo authentication active'
+      );
+      onNavigate(targetRole === 'admin' ? '/admin/dashboard' : '/student/dashboard');
+    } catch (err: any) {
+      setError(err?.message || 'Demo login failed.');
+    }
   };
 
   return (

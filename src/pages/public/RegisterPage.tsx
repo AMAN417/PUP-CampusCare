@@ -48,22 +48,39 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
     'Silver Jubilee Hostel',
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email) return;
+    if (!formData.name || !formData.email || !formData.password) {
+      setError('Please fill in all required fields.');
+      return;
+    }
 
-    register({
-      name: formData.name,
-      email: formData.email,
-      rollNo: formData.rollNo || `PUP2026-${Math.floor(1000 + Math.random() * 9000)}`,
-      department: formData.department,
-      hostel: formData.hostel === 'Day Scholar (No Hostel)' ? 'Day Scholar' : formData.hostel,
-      phone: formData.phone || '+91 98000 00000',
-      role: 'student',
-    });
+    try {
+      setError('');
+      setSubmitting(true);
+      await register(
+        {
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          rollNo: formData.rollNo.trim() || `PUP2026-${Math.floor(1000 + Math.random() * 9000)}`,
+          department: formData.department,
+          hostel: formData.hostel === 'Day Scholar (No Hostel)' ? 'Day Scholar' : formData.hostel,
+          phone: formData.phone.trim() || '+91 98000 00000',
+          role: 'student',
+        },
+        formData.password
+      );
 
-    success('Registration Successful', `Welcome, ${formData.name}!`);
-    onNavigate('/student/dashboard');
+      success('Registration Successful', `Welcome, ${formData.name}!`);
+      onNavigate('/student/dashboard');
+    } catch (err: any) {
+      setError(err?.message || 'Registration failed. Please check your details.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -80,6 +97,23 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
             Join PUP CampusCare to report maintenance issues and track campus resolutions
           </p>
         </div>
+
+        {error && (
+          <div
+            style={{
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '8px',
+              padding: '0.75rem 1rem',
+              color: '#dc2626',
+              fontSize: '0.85rem',
+              marginBottom: '1.25rem',
+              fontWeight: 500,
+            }}
+          >
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -258,10 +292,11 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
             type="submit"
             variant="primary"
             size="lg"
+            isLoading={submitting}
             style={{ width: '100%', marginTop: '0.5rem' }}
             rightIcon={<ArrowRight size={16} />}
           >
-            Create Account & Enter Portal
+            {submitting ? 'Creating Account...' : 'Create Account & Enter Portal'}
           </Button>
         </form>
 

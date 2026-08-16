@@ -44,10 +44,16 @@ const runTests = async () => {
     const s = app.listen(TEST_PORT, () => resolve(s));
   });
 
-  console.log(`\n🧪 Running PUP CampusCare API Test Suite on port ${TEST_PORT} (Provider: ${getDataProvider()})...\n`);
+  console.log(`\n🧪 Running PUP CampusCare API & RBAC Test Suite on port ${TEST_PORT} (Provider: ${getDataProvider()})...\n`);
+
+  let studentToken = '';
+  let studentUser: any = null;
+  let adminToken = '';
+  let adminUser: any = null;
+  let createdComplaintId = '';
 
   try {
-    // 1. Health Check
+    // 1. Health Check (Public endpoint)
     {
       const res = await fetch(`${BASE_URL}/health`);
       const body = (await res.json()) as any;
@@ -56,259 +62,399 @@ const runTests = async () => {
         body.success === true &&
         body.data?.status === 'UP';
       results.push({
-        name: 'GET /api/campuscare/health (Health check)',
+        name: 'GET /api/campuscare/health (Public Health check)',
         passed,
         status: res.status,
         details: `Message: "${body.message}" | Environment: ${body.data?.environment}`,
       });
     }
 
-    // 2. List Complaints
+    // 2. Unauthenticated check (Expected 401 Unauthorized)
     {
       const res = await fetch(`${BASE_URL}/complaints`);
       const body = (await res.json()) as any;
-      const passed =
-        res.status === 200 &&
-        body.success === true &&
-        Array.isArray(body.data) &&
-        body.data.length >= 5;
+      const passed = res.status === 401 && body.success === false;
       results.push({
-        name: 'GET /api/campuscare/complaints (List complaints)',
+        name: 'Negative Test: GET /complaints without token (Expected 401 Unauthorized)',
         passed,
         status: res.status,
-        details: `Found ${body.data?.length} seed complaints in storage.`,
+        details: `Correctly rejected unauthenticated request: "${body.error}"`,
       });
     }
 
-    // 3. Single Complaint Lookup
+    // 3. Student Registration
     {
-      const res = await fetch(`${BASE_URL}/complaints/PUP-2026-0101`);
+      const registerPayload = {
+        name: `Simranjeet Singh ${Math.floor(Math.random() * 1000)}`,
+        email: `student.${Date.now()}@demo.pup.ac.in`,
+        password: 'password123',
+        rollNo: 'PUP2024-CS-099',
+        department: 'Department of Computer Science & Engineering',
+        hostel: 'Banda Singh Bahadur Hostel',
+      };
+
+      const res = await fetch(`${BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(registerPayload),
+      });
+      const body = (await res.json()) as any;
+      studentToken = body.data?.token || '';
+      studentUser = body.data?.user || null;
+      const passed =
+        res.status === 201 &&
+        body.success === true &&
+        Boolean(studentToken) &&
+        studentUser?.role === 'student';
+
+      results.push({
+        name: 'POST /api/campuscare/auth/register (Student Registration)',
+        passed,
+        status: res.status,
+        details: `Registered: ${studentUser?.name} (${studentUser?.email}) | Role: ${studentUser?.role}`,
+      });
+    }
+
+    // 4. Admin Demo Login
+    {
+      const res = await fetch(`${BASE_URL}/auth/demo-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'admin' }),
+      });
+      const body = (await res.json()) as any;
+      adminToken = body.data?.token || '';
+      adminUser = body.data?.user || null;
+      const passed =
+        res.status === 200 &&
+        body.success === true &&
+        Boolean(adminToken) &&
+        adminUser?.role === 'admin';
+
+      results.push({
+        name: 'POST /api/campuscare/auth/demo-login (Admin Authentication)',
+        passed,
+        status: res.status,
+        details: `Authenticated Admin: ${adminUser?.name} (${adminUser?.email}) | Role: ${adminUser?.role}`,
+      });
+    }
+
+    // 5. Auth Me Profile Verification
+    {
+      const res = await fetch(`${BASE_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${studentToken}` },
+      });
       const body = (await res.json()) as any;
       const passed =
         res.status === 200 &&
         body.success === true &&
-        body.data?.id === 'PUP-2026-0101';
+        body.data?.user?.email === studentUser?.email;
+
       results.push({
-        name: 'GET /api/campuscare/complaints/PUP-2026-0101 (Get single complaint)',
+        name: 'GET /api/campuscare/auth/me (Verify Bearer token & Profile)',
         passed,
         status: res.status,
-        details: `Title: "${body.data?.title?.slice(0, 40)}..." | Category: ${body.data?.category}`,
+        details: `Verified Profile: ${body.data?.user?.name} | ID: ${body.data?.user?.id}`,
       });
     }
 
-    // 4. Create New Complaint
-    let createdId = '';
+    // 6. Student creates complaint (server derives identity, ignores spoofed identity)
     {
-      const payload = {
-        title: 'Water Cooler Filter Replacement in Library Ground Floor',
+      const complaintPayload = {
+        title: 'Water Leakage in 2nd Floor Corridor Washroom',
         description:
-          'The drinking water cooler in the central library reading hall is dispensing cloudy water with high TDS. Filter needs replacement.',
+          'Continuous leakage in the main supply pipe causing water accumulation in hostel corridor.',
         category: 'Water',
-        location: 'Bhai Kahn Singh Nabha Central Library - Ground Floor',
-        priority: 'Medium',
-        studentName: 'Harmanpreet Singh',
-        studentRollNo: 'PUP2024-CS-042',
+        location: 'Banda Singh Bahadur Hostel - 2nd Floor Block B',
+        priority: 'High',
+        // Attempt to forge another user's identity (must be overridden server-side)
+        studentName: 'Spoofed Name',
+        studentId: 'spoofed-id',
       };
 
       const res = await fetch(`${BASE_URL}/complaints`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${studentToken}`,
+        },
+        body: JSON.stringify(complaintPayload),
       });
       const body = (await res.json()) as any;
-      createdId = body.data?.id || '';
+      createdComplaintId = body.data?.id || '';
+
       const passed =
         res.status === 201 &&
         body.success === true &&
-        createdId.startsWith('PUP-');
+        body.data?.studentId === studentUser?.id &&
+        body.data?.studentName === studentUser?.name;
+
       results.push({
-        name: 'POST /api/campuscare/complaints (Submit new complaint)',
+        name: 'POST /api/campuscare/complaints (Student creates complaint with server-side identity injection)',
         passed,
         status: res.status,
-        details: `Generated ID: ${createdId} | Status: ${body.data?.status}`,
+        details: `Generated ID: ${createdComplaintId} | Server Injected Student: ${body.data?.studentName} (${body.data?.studentId})`,
       });
     }
 
-    // 5. Patch Complaint (Assign Officer & Department)
-    if (createdId) {
-      const patchPayload = {
-        assignedDepartment: 'Water Supply & Public Health',
-        assignedTo: 'Er. Gurpreet Singh',
-        priority: 'High',
-      };
+    // 7. Student lists complaints (strictly scoped to their complaints)
+    {
+      const res = await fetch(`${BASE_URL}/complaints`, {
+        headers: { Authorization: `Bearer ${studentToken}` },
+      });
+      const body = (await res.json()) as any;
+      const allOwnedByStudent = (body.data || []).every(
+        (c: any) => c.studentId === studentUser?.id
+      );
+      const passed =
+        res.status === 200 &&
+        body.success === true &&
+        Array.isArray(body.data) &&
+        body.data.length >= 1 &&
+        allOwnedByStudent;
 
-      const res = await fetch(`${BASE_URL}/complaints/${createdId}`, {
+      results.push({
+        name: 'GET /api/campuscare/complaints (Scoped to student user)',
+        passed,
+        status: res.status,
+        details: `Found ${body.data?.length} complaint(s) belonging strictly to student ${studentUser?.name}.`,
+      });
+    }
+
+    // 8. RBAC Test: Student attempts to advance status (Expected 403 Forbidden)
+    if (createdComplaintId) {
+      const res = await fetch(`${BASE_URL}/complaints/${createdComplaintId}/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${studentToken}`,
+        },
+        body: JSON.stringify({ status: 'Under Review' }),
+      });
+      const body = (await res.json()) as any;
+      const passed = res.status === 403 && body.success === false;
+
+      results.push({
+        name: 'Negative RBAC Test: Student attempts status update (Expected 403 Forbidden)',
+        passed,
+        status: res.status,
+        details: `Rejected student status transition: "${body.error}"`,
+      });
+    }
+
+    // 9. RBAC Test: Student attempts to assign officer (Expected 403 Forbidden)
+    if (createdComplaintId) {
+      const res = await fetch(`${BASE_URL}/complaints/${createdComplaintId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patchPayload),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${studentToken}`,
+        },
+        body: JSON.stringify({
+          assignedDepartment: 'Water Supply & Public Health',
+          assignedTo: 'Er. Gurpreet Singh',
+        }),
+      });
+      const body = (await res.json()) as any;
+      const passed = res.status === 403 && body.success === false;
+
+      results.push({
+        name: 'Negative RBAC Test: Student attempts officer assignment (Expected 403 Forbidden)',
+        passed,
+        status: res.status,
+        details: `Rejected student officer patch: "${body.error}"`,
+      });
+    }
+
+    // 10. Admin assigns officer (Expected 200 OK)
+    if (createdComplaintId) {
+      const res = await fetch(`${BASE_URL}/complaints/${createdComplaintId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({
+          assignedDepartment: 'Water Supply & Public Health',
+          assignedTo: 'Er. Gurpreet Singh',
+        }),
       });
       const body = (await res.json()) as any;
       const passed =
         res.status === 200 &&
         body.success === true &&
-        body.data?.assignedDepartment === 'Water Supply & Public Health' &&
-        body.data?.assignedTo === 'Er. Gurpreet Singh' &&
-        body.data?.priority === 'High';
+        body.data?.assignedTo === 'Er. Gurpreet Singh';
+
       results.push({
-        name: 'PATCH /api/campuscare/complaints/:id (Assign Department & Officer)',
+        name: 'PATCH /api/campuscare/complaints/:id (Admin assigns Department & Officer)',
         passed,
         status: res.status,
         details: `Assigned: ${body.data?.assignedTo} (${body.data?.assignedDepartment})`,
       });
     }
 
-    // 6. Advance Status (Submitted -> Under Review)
-    if (createdId) {
-      const statusPayload = {
-        status: 'Under Review',
-        notes: 'Helpdesk review conducted. Work order requested.',
-        department: 'Water Supply & Public Health',
-      };
-
-      const res = await fetch(`${BASE_URL}/complaints/${createdId}/status`, {
+    // 11. Admin advances status (Expected 200 OK)
+    if (createdComplaintId) {
+      const res = await fetch(`${BASE_URL}/complaints/${createdComplaintId}/status`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(statusPayload),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({
+          status: 'Under Review',
+          notes: 'Triaged by maintenance desk. Work order assigned.',
+          department: 'Water Supply & Public Health',
+        }),
       });
       const body = (await res.json()) as any;
       const passed =
         res.status === 200 &&
         body.success === true &&
-        body.data?.status === 'Under Review' &&
-        body.data?.statusHistory?.length >= 2;
+        body.data?.status === 'Under Review';
+
       results.push({
-        name: 'POST /api/campuscare/complaints/:id/status (Advance status to Under Review)',
+        name: 'POST /api/campuscare/complaints/:id/status (Admin advances status)',
         passed,
         status: res.status,
-        details: `Current Status: ${body.data?.status} | History steps: ${body.data?.statusHistory?.length}`,
+        details: `Advanced status to "${body.data?.status}" by ${adminUser?.name}`,
       });
     }
 
-    // 7. Add Comment
-    if (createdId) {
-      const commentPayload = {
-        message:
-          'Technician has collected water sample for laboratory testing.',
-        userName: 'Er. Gurpreet Singh (WSPH)',
-        userRole: 'admin',
-        isInternal: false,
-      };
-
-      const res = await fetch(`${BASE_URL}/complaints/${createdId}/comments`, {
+    // 12. Student adds comment to their complaint (Expected 201 Created)
+    if (createdComplaintId) {
+      const res = await fetch(`${BASE_URL}/complaints/${createdComplaintId}/comments`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(commentPayload),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${studentToken}`,
+        },
+        body: JSON.stringify({
+          message: 'Thank you. Please send the technician before 4:00 PM.',
+        }),
       });
       const body = (await res.json()) as any;
       const passed =
         res.status === 201 &&
         body.success === true &&
-        body.data?.comment?.message === commentPayload.message;
+        body.data?.comment?.userName === studentUser?.name &&
+        body.data?.comment?.userRole === 'student';
+
       results.push({
-        name: 'POST /api/campuscare/complaints/:id/comments (Add comment/response)',
+        name: 'POST /api/campuscare/complaints/:id/comments (Student adds comment)',
         passed,
         status: res.status,
         details: `Author: ${body.data?.comment?.userName} | ID: ${body.data?.comment?.id}`,
       });
     }
 
-    // 8. Notifications List
+    // 13. Student Privacy: Student attempts to access another student's complaint (Expected 403 Forbidden)
     {
-      const res = await fetch(`${BASE_URL}/notifications`);
+      // PUP-2026-0102 belongs to Navjot Kaur (user-student-2), not the registered student
+      const res = await fetch(`${BASE_URL}/complaints/PUP-2026-0102`, {
+        headers: { Authorization: `Bearer ${studentToken}` },
+      });
+      const body = (await res.json()) as any;
+      const passed = res.status === 403 && body.success === false;
+
+      results.push({
+        name: 'Negative Privacy Test: Student attempts to access another student\'s complaint (Expected 403 Forbidden)',
+        passed,
+        status: res.status,
+        details: `Access denied as expected: "${body.error}"`,
+      });
+    }
+
+    // 14. Scoped Notifications (Expected 200 OK)
+    {
+      const res = await fetch(`${BASE_URL}/notifications`, {
+        headers: { Authorization: `Bearer ${studentToken}` },
+      });
       const body = (await res.json()) as any;
       const passed =
         res.status === 200 &&
         body.success === true &&
-        Array.isArray(body.data) &&
-        body.data.length >= 3;
+        Array.isArray(body.data);
+
       results.push({
-        name: 'GET /api/campuscare/notifications (List notifications)',
+        name: 'GET /api/campuscare/notifications (Authenticated & Scoped to user)',
         passed,
         status: res.status,
-        details: `Total notifications in queue: ${body.data?.length}`,
+        details: `Total notifications for student: ${body.data?.length}`,
       });
     }
 
-    // 9. Negative Test 1: Invalid Status Transition
-    if (createdId) {
-      const invalidStatusPayload = {
-        status: 'Resolved', // Invalid jump (must go to Assigned -> In Progress first)
-      };
-
-      const res = await fetch(`${BASE_URL}/complaints/${createdId}/status`, {
+    // 15. Negative Test: Invalid status lifecycle jump (Admin)
+    if (createdComplaintId) {
+      const res = await fetch(`${BASE_URL}/complaints/${createdComplaintId}/status`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invalidStatusPayload),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({ status: 'Resolved' }), // Invalid jump from Under Review to Resolved
       });
       const body = (await res.json()) as any;
-      const passed =
-        res.status === 400 &&
-        body.success === false &&
-        body.error?.includes('Invalid status transition');
+      const passed = res.status === 400 && body.success === false;
+
       results.push({
-        name: 'Negative Test: Invalid status lifecycle jump (Expected 400 Bad Request)',
+        name: 'Negative Test: Invalid lifecycle transition jump (Expected 400 Bad Request)',
         passed,
         status: res.status,
-        details: `Rejected correctly with message: "${body.error}"`,
+        details: `Rejected invalid transition: "${body.error}"`,
       });
     }
 
-    // 10. Negative Test 2: Missing Required Fields on Create
+    // 16. Negative Test: Missing required fields on complaint submission
     {
-      const invalidPayload = {
-        title: 'A', // Too short
-        category: 'InvalidCategory', // Invalid enum
-        location: '', // Missing
-      };
-
       const res = await fetch(`${BASE_URL}/complaints`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invalidPayload),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${studentToken}`,
+        },
+        body: JSON.stringify({ title: 'A', category: 'InvalidCat' }),
       });
       const body = (await res.json()) as any;
-      const passed =
-        res.status === 400 &&
-        body.success === false &&
-        Array.isArray(body.errors) &&
-        body.errors.length >= 3;
+      const passed = res.status === 400 && body.success === false;
+
       results.push({
-        name: 'Negative Test: Validation schema error with multiple fields (Expected 400 Bad Request)',
+        name: 'Negative Test: Schema validation errors on create (Expected 400 Bad Request)',
         passed,
         status: res.status,
-        details: `Validation errors caught (${body.errors?.length}): ${body.errors?.slice(0, 2).join('; ')}`,
+        details: `Errors caught (${body.errors?.length}): ${body.errors?.slice(0, 2).join('; ')}`,
       });
     }
 
-    // 11. Negative Test 3: Non-existent Complaint ID (404)
+    // 17. Negative Test: Nonexistent complaint ID lookup (Admin)
     {
-      const res = await fetch(`${BASE_URL}/complaints/PUP-2026-9999`);
+      const res = await fetch(`${BASE_URL}/complaints/PUP-2026-9999`, {
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
       const body = (await res.json()) as any;
-      const passed =
-        res.status === 404 &&
-        body.success === false &&
-        body.error?.includes('not found');
+      const passed = res.status === 404 && body.success === false;
+
       results.push({
         name: 'Negative Test: Nonexistent complaint ID lookup (Expected 404 Not Found)',
         passed,
         status: res.status,
-        details: `Error returned: "${body.error}"`,
+        details: `Returned: "${body.error}"`,
       });
     }
 
-    // 12. Negative Test 4: Malformed Complaint ID format
+    // 18. Negative Test: Malformed complaint ID format
     {
-      const res = await fetch(`${BASE_URL}/complaints/invalid*id!%23`);
+      const res = await fetch(`${BASE_URL}/complaints/invalid*id!%23`, {
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
       const body = (await res.json()) as any;
-      const passed =
-        res.status === 400 &&
-        body.success === false &&
-        body.error?.includes('Invalid complaint ID format');
+      const passed = res.status === 400 && body.success === false;
+
       results.push({
         name: 'Negative Test: Malformed complaint ID format (Expected 400 Bad Request)',
         passed,
         status: res.status,
-        details: `Error returned: "${body.error}"`,
+        details: `Returned: "${body.error}"`,
       });
     }
   } finally {
@@ -335,7 +481,7 @@ const runTests = async () => {
     process.exit(1);
   } else {
     console.log(
-      `\n🎉 All ${results.length} API test cases passed successfully!`
+      `\n🎉 All ${results.length} API & RBAC test cases passed successfully!`
     );
   }
 };

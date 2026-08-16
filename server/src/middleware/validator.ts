@@ -182,3 +182,76 @@ export const validatePatchComplaint = (
 
   next();
 };
+
+export const validateRegister = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): void => {
+  const { name, email, password } = req.body;
+  const errors: string[] = [];
+
+  if (!name || typeof name !== 'string' || name.trim().length < 2) {
+    errors.push('Field "name" is required and must be at least 2 characters.');
+  }
+
+  if (
+    !email ||
+    typeof email !== 'string' ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+  ) {
+    errors.push('A valid "email" address is required.');
+  }
+
+  if (
+    !password ||
+    typeof password !== 'string' ||
+    password.length < 6
+  ) {
+    errors.push('Field "password" is required and must be at least 6 characters.');
+  }
+
+  if (errors.length > 0) {
+    return next(new AppError('Validation failed for registration.', 400, errors));
+  }
+
+  next();
+};
+
+export const validateLogin = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): void => {
+  const { email, password } = req.body;
+  const errors: string[] = [];
+
+  if (!email || typeof email !== 'string' || !email.trim()) {
+    errors.push('Field "email" is required.');
+  }
+
+  if (!password || typeof password !== 'string' || !password) {
+    errors.push('Field "password" is required.');
+  }
+
+  if (errors.length > 0) {
+    return next(new AppError('Validation failed for login.', 400, errors));
+  }
+
+  next();
+};
+
+export const validateDemoLogin = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): void => {
+  const { role } = req.body;
+  if (!role || !['student', 'admin', 'faculty'].includes(role)) {
+    return next(
+      new AppError('Field "role" must be one of: student, admin, faculty.', 400)
+    );
+  }
+  next();
+};
+
