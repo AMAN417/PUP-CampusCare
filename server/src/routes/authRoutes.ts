@@ -4,6 +4,7 @@ import {
   login,
   demoLogin,
   getMe,
+  resendVerification,
   logout,
 } from '../controllers/authController.js';
 import {
@@ -23,6 +24,9 @@ router.post('/auth/login', validateLogin, login);
 
 // POST /api/campuscare/auth/demo-login - Instant 1-click demo login
 router.post('/auth/demo-login', validateDemoLogin, demoLogin);
+
+// POST /api/campuscare/auth/resend-verification - Resend email verification link
+router.post('/auth/resend-verification', resendVerification);
 
 // GET /api/campuscare/auth/me - Retrieve current verified profile
 router.get('/auth/me', requireAuth, getMe);

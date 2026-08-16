@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ComplaintProvider } from './context/ComplaintContext';
 import { ToastProvider } from './context/ToastContext';
 import { DashboardLayout } from './components/layout/DashboardLayout';
@@ -10,6 +10,7 @@ import { Footer } from './components/layout/Footer';
 import { LandingPage } from './pages/public/LandingPage';
 import { LoginPage } from './pages/public/LoginPage';
 import { RegisterPage } from './pages/public/RegisterPage';
+import { VerifyEmailPage } from './pages/public/VerifyEmailPage';
 
 // Student Pages
 import { StudentDashboard } from './pages/student/StudentDashboard';
@@ -29,6 +30,8 @@ import { UserManagement } from './pages/admin/UserManagement';
 import type { ComplaintCategory, ComplaintStatus } from './types';
 
 const MainApp: React.FC = () => {
+  const { user, isAuthenticated, loading } = useAuth();
+
   // Route state initialized from window location hash or default
   const getInitialPath = (): string => {
     if (typeof window !== 'undefined') {
@@ -61,6 +64,24 @@ const MainApp: React.FC = () => {
 
   // Route parser
   const renderRoute = () => {
+    if (loading) {
+      return (
+        <div
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'var(--bg-main)',
+            color: 'var(--pup-maroon)',
+            fontWeight: 600,
+          }}
+        >
+          Loading PUP CampusCare...
+        </div>
+      );
+    }
+
     // Extract base path and query parameters
     const [pathPart, queryPart] = currentPath.split('?');
     const queryParams = new URLSearchParams(queryPart || '');
@@ -102,99 +123,140 @@ const MainApp: React.FC = () => {
       );
     }
 
-    // Student Routes
-    if (pathPart === '/student/dashboard') {
+    if (pathPart === '/verify-email') {
+      const email = queryParams.get('email') || undefined;
       return (
-        <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
-          <StudentDashboard onNavigate={navigate} />
-        </DashboardLayout>
+        <div className="app-container">
+          <Navbar currentPath={currentPath} onNavigate={navigate} />
+          <main className="page-wrapper">
+            <VerifyEmailPage email={email} onNavigate={navigate} />
+          </main>
+          <Footer onNavigate={navigate} />
+        </div>
       );
     }
 
-    if (pathPart === '/student/submit') {
-      const defaultCategory = queryParams.get('category') as ComplaintCategory | null;
-      return (
-        <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
-          <SubmitComplaint onNavigate={navigate} defaultCategory={defaultCategory || undefined} />
-        </DashboardLayout>
-      );
+    // Protected Student Routes (Require authenticated session)
+    if (pathPart.startsWith('/student')) {
+      if (!isAuthenticated || !user) {
+        return (
+          <div className="app-container">
+            <Navbar currentPath={currentPath} onNavigate={navigate} />
+            <main className="page-wrapper">
+              <LoginPage onNavigate={navigate} />
+            </main>
+            <Footer onNavigate={navigate} />
+          </div>
+        );
+      }
+
+      if (pathPart === '/student/dashboard') {
+        return (
+          <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
+            <StudentDashboard onNavigate={navigate} />
+          </DashboardLayout>
+        );
+      }
+
+      if (pathPart === '/student/submit') {
+        const defaultCategory = queryParams.get('category') as ComplaintCategory | null;
+        return (
+          <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
+            <SubmitComplaint onNavigate={navigate} defaultCategory={defaultCategory || undefined} />
+          </DashboardLayout>
+        );
+      }
+
+      if (pathPart === '/student/complaints') {
+        const tab = queryParams.get('tab') || 'all';
+        return (
+          <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
+            <MyComplaints onNavigate={navigate} initialTab={tab} />
+          </DashboardLayout>
+        );
+      }
+
+      if (pathPart.startsWith('/student/complaints/')) {
+        const complaintId = pathPart.replace('/student/complaints/', '');
+        return (
+          <DashboardLayout currentPath="/student/complaints" onNavigate={navigate}>
+            <ComplaintDetails complaintId={complaintId} onNavigate={navigate} />
+          </DashboardLayout>
+        );
+      }
+
+      if (pathPart === '/student/notifications') {
+        return (
+          <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
+            <NotificationsPage onNavigate={navigate} />
+          </DashboardLayout>
+        );
+      }
+
+      if (pathPart === '/student/profile') {
+        return (
+          <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
+            <ProfilePage onNavigate={navigate} />
+          </DashboardLayout>
+        );
+      }
     }
 
-    if (pathPart === '/student/complaints') {
-      const tab = queryParams.get('tab') || 'all';
-      return (
-        <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
-          <MyComplaints onNavigate={navigate} initialTab={tab} />
-        </DashboardLayout>
-      );
-    }
+    // Protected Admin Routes (Require authenticated admin session)
+    if (pathPart.startsWith('/admin')) {
+      if (!isAuthenticated || !user || user.role !== 'admin') {
+        return (
+          <div className="app-container">
+            <Navbar currentPath={currentPath} onNavigate={navigate} />
+            <main className="page-wrapper">
+              <LoginPage onNavigate={navigate} />
+            </main>
+            <Footer onNavigate={navigate} />
+          </div>
+        );
+      }
 
-    if (pathPart.startsWith('/student/complaints/')) {
-      const complaintId = pathPart.replace('/student/complaints/', '');
-      return (
-        <DashboardLayout currentPath="/student/complaints" onNavigate={navigate}>
-          <ComplaintDetails complaintId={complaintId} onNavigate={navigate} />
-        </DashboardLayout>
-      );
-    }
+      if (pathPart === '/admin/dashboard') {
+        return (
+          <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
+            <AdminDashboard onNavigate={navigate} />
+          </DashboardLayout>
+        );
+      }
 
-    if (pathPart === '/student/notifications') {
-      return (
-        <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
-          <NotificationsPage onNavigate={navigate} />
-        </DashboardLayout>
-      );
-    }
+      if (pathPart === '/admin/complaints') {
+        const statusParam = queryParams.get('status') as ComplaintStatus | 'ALL' | null;
+        return (
+          <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
+            <ComplaintsManagement onNavigate={navigate} initialStatus={statusParam || 'ALL'} />
+          </DashboardLayout>
+        );
+      }
 
-    if (pathPart === '/student/profile') {
-      return (
-        <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
-          <ProfilePage onNavigate={navigate} />
-        </DashboardLayout>
-      );
-    }
+      if (pathPart.startsWith('/admin/complaints/')) {
+        const complaintId = pathPart.replace('/admin/complaints/', '');
+        return (
+          <DashboardLayout currentPath="/admin/complaints" onNavigate={navigate}>
+            <AdminComplaintDetails complaintId={complaintId} onNavigate={navigate} />
+          </DashboardLayout>
+        );
+      }
 
-    // Admin Routes
-    if (pathPart === '/admin/dashboard') {
-      return (
-        <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
-          <AdminDashboard onNavigate={navigate} />
-        </DashboardLayout>
-      );
-    }
+      if (pathPart === '/admin/analytics') {
+        return (
+          <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
+            <AnalyticsPage onNavigate={navigate} />
+          </DashboardLayout>
+        );
+      }
 
-    if (pathPart === '/admin/complaints') {
-      const statusParam = queryParams.get('status') as ComplaintStatus | 'ALL' | null;
-      return (
-        <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
-          <ComplaintsManagement onNavigate={navigate} initialStatus={statusParam || 'ALL'} />
-        </DashboardLayout>
-      );
-    }
-
-    if (pathPart.startsWith('/admin/complaints/')) {
-      const complaintId = pathPart.replace('/admin/complaints/', '');
-      return (
-        <DashboardLayout currentPath="/admin/complaints" onNavigate={navigate}>
-          <AdminComplaintDetails complaintId={complaintId} onNavigate={navigate} />
-        </DashboardLayout>
-      );
-    }
-
-    if (pathPart === '/admin/analytics') {
-      return (
-        <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
-          <AnalyticsPage onNavigate={navigate} />
-        </DashboardLayout>
-      );
-    }
-
-    if (pathPart === '/admin/users') {
-      return (
-        <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
-          <UserManagement onNavigate={navigate} />
-        </DashboardLayout>
-      );
+      if (pathPart === '/admin/users') {
+        return (
+          <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
+            <UserManagement onNavigate={navigate} />
+          </DashboardLayout>
+        );
+      }
     }
 
     // Fallback to Landing

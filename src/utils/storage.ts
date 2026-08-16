@@ -62,9 +62,6 @@ export const initStorage = (): void => {
   if (!localStorage.getItem(STORAGE_KEYS.DEPARTMENTS)) {
     saveToStorage(STORAGE_KEYS.DEPARTMENTS, DEMO_DEPARTMENTS);
   }
-  if (!localStorage.getItem(STORAGE_KEYS.CURRENT_USER)) {
-    saveToStorage(STORAGE_KEYS.CURRENT_USER, DEMO_USERS[0]); // Default to student
-  }
 };
 
 // Ensure initialized on module load
@@ -72,12 +69,16 @@ initStorage();
 
 export const storage = {
   // User operations
-  getCurrentUser: (): User => {
-    return getFromStorage<User>(STORAGE_KEYS.CURRENT_USER, DEMO_USERS[0]);
+  getCurrentUser: (): User | null => {
+    return getFromStorage<User | null>(STORAGE_KEYS.CURRENT_USER, null);
   },
 
-  setCurrentUser: (user: User): void => {
-    saveToStorage(STORAGE_KEYS.CURRENT_USER, user);
+  setCurrentUser: (user: User | null): void => {
+    if (user === null) {
+      if (isBrowser) localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+    } else {
+      saveToStorage(STORAGE_KEYS.CURRENT_USER, user);
+    }
   },
 
   getUsers: (): User[] => {

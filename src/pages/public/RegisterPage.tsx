@@ -61,7 +61,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
     try {
       setError('');
       setSubmitting(true);
-      await register(
+      const result = await register(
         {
           name: formData.name.trim(),
           email: formData.email.trim(),
@@ -74,8 +74,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
         formData.password
       );
 
-      success('Registration Successful', `Welcome, ${formData.name}!`);
-      onNavigate('/student/dashboard');
+      if (result?.requiresVerification) {
+        success('Verification Link Sent', `Please check your email (${formData.email.trim()}) to verify your account.`);
+        onNavigate(`/verify-email?email=${encodeURIComponent(formData.email.trim())}`);
+      } else {
+        success('Registration Successful', `Welcome, ${formData.name}!`);
+        onNavigate('/student/dashboard');
+      }
     } catch (err: any) {
       setError(err?.message || 'Registration failed. Please check your details.');
     } finally {

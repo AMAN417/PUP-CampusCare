@@ -82,11 +82,12 @@ const runTests = async () => {
       });
     }
 
-    // 3. Student Registration
+    // 3. Student Registration (Enforces Email Verification requirement)
     {
+      const studentEmail = `student.${Date.now()}.${Math.floor(Math.random() * 100000)}@demo.pup.ac.in`;
       const registerPayload = {
         name: `Simranjeet Singh ${Math.floor(Math.random() * 1000)}`,
-        email: `student.${Date.now()}@demo.pup.ac.in`,
+        email: studentEmail,
         password: 'password123',
         rollNo: 'PUP2024-CS-099',
         department: 'Department of Computer Science & Engineering',
@@ -99,23 +100,66 @@ const runTests = async () => {
         body: JSON.stringify(registerPayload),
       });
       const body = (await res.json()) as any;
+      const registeredUser = body.data?.user || null;
+      const requiresVerification = body.data?.requiresVerification === true;
+
+      const passed =
+        res.status === 201 &&
+        body.success === true &&
+        requiresVerification &&
+        registeredUser?.role === 'student';
+
+      results.push({
+        name: 'POST /api/campuscare/auth/register (Enforces mandatory email verification)',
+        passed,
+        status: res.status,
+        details: `Registered: ${registeredUser?.name} (${registeredUser?.email}) | Requires Verification: ${requiresVerification}`,
+      });
+
+      // 3b. Resend Verification Email Test
+      {
+        const resendRes = await fetch(`${BASE_URL}/auth/resend-verification`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: studentEmail }),
+        });
+        const resendBody = (await resendRes.json()) as any;
+        const resendPassed = resendRes.status === 200 && resendBody.success === true;
+
+        results.push({
+          name: 'POST /api/campuscare/auth/resend-verification (Resend verification link)',
+          passed: resendPassed,
+          status: resendRes.status,
+          details: `Message: "${resendBody.message}"`,
+        });
+      }
+    }
+
+    // 4. Student Demo Authentication (Verified demo student account)
+    {
+      const res = await fetch(`${BASE_URL}/auth/demo-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'student' }),
+      });
+      const body = (await res.json()) as any;
       studentToken = body.data?.token || '';
       studentUser = body.data?.user || null;
       const passed =
-        res.status === 201 &&
+        res.status === 200 &&
         body.success === true &&
         Boolean(studentToken) &&
         studentUser?.role === 'student';
 
       results.push({
-        name: 'POST /api/campuscare/auth/register (Student Registration)',
+        name: 'POST /api/campuscare/auth/demo-login (Student Demo Authentication)',
         passed,
         status: res.status,
-        details: `Registered: ${studentUser?.name} (${studentUser?.email}) | Role: ${studentUser?.role}`,
+        details: `Authenticated Student: ${studentUser?.name} (${studentUser?.email}) | Role: ${studentUser?.role}`,
       });
     }
 
-    // 4. Admin Demo Login
+    // 4b. Admin Demo Authentication (Verified demo admin account)
     {
       const res = await fetch(`${BASE_URL}/auth/demo-login`, {
         method: 'POST',
@@ -132,7 +176,7 @@ const runTests = async () => {
         adminUser?.role === 'admin';
 
       results.push({
-        name: 'POST /api/campuscare/auth/demo-login (Admin Authentication)',
+        name: 'POST /api/campuscare/auth/demo-login (Admin Demo Authentication)',
         passed,
         status: res.status,
         details: `Authenticated Admin: ${adminUser?.name} (${adminUser?.email}) | Role: ${adminUser?.role}`,

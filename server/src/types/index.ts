@@ -113,9 +113,10 @@ export interface Department {
 
 export interface AuthResponseData {
   user: User;
-  token: string;
+  token?: string;
   refreshToken?: string;
   expiresIn?: number;
+  requiresVerification?: boolean;
 }
 
 export interface ApiResponse<T = unknown> {

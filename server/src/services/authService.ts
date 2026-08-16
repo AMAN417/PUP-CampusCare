@@ -34,7 +34,7 @@ const createMemoryToken = (user: User): string => {
 
 export class AuthService {
   /**
-   * Register a new student account
+   * Register a new student account requiring email verification
    */
   public async register(input: RegisterInput): Promise<AuthResponseData> {
     const provider = getDataProvider();
@@ -44,16 +44,11 @@ export class AuthService {
     if (provider === 'supabase' && isSupabaseConfigured()) {
       const supabase = getSupabaseClient();
 
-      let authUserId: string | null = null;
-      let session: any = null;
-
-      // 1. Attempt admin.createUser if available, or standard signUp
-      try {
-        const { data: adminData, error: adminError } = await supabase.auth.admin.createUser({
-          email,
-          password: input.password,
-          email_confirm: true,
-          user_metadata: {
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password: input.password,
+        options: {
+          data: {
             name: input.name,
             role,
             roll_no: input.rollNo || null,
@@ -61,58 +56,19 @@ export class AuthService {
             hostel: input.hostel || null,
             phone: input.phone || null,
           },
-        });
+        },
+      });
 
-        if (!adminError && adminData?.user) {
-          authUserId = adminData.user.id;
-        } else if (adminError && adminError.message.toLowerCase().includes('already registered')) {
+      if (signUpError) {
+        if (signUpError.message.toLowerCase().includes('already registered')) {
           throw new AppError('An account with this email already exists. Please sign in instead.', 409);
         }
-      } catch (err: any) {
-        if (err instanceof AppError) throw err;
+        throw new AppError(`Registration failed: ${signUpError.message}`, 400);
       }
 
-      // If not created via admin, use standard signUp
-      if (!authUserId) {
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password: input.password,
-          options: {
-            data: {
-              name: input.name,
-              role,
-              roll_no: input.rollNo || null,
-              department: input.department || 'General',
-              hostel: input.hostel || null,
-              phone: input.phone || null,
-            },
-          },
-        });
+      const authUserId = signUpData.user?.id || null;
 
-        if (signUpError) {
-          if (signUpError.message.toLowerCase().includes('already registered')) {
-            throw new AppError('An account with this email already exists. Please sign in instead.', 409);
-          }
-          throw new AppError(`Registration failed: ${signUpError.message}`, 400);
-        }
-
-        authUserId = signUpData.user?.id || null;
-        session = signUpData.session;
-      }
-
-      // Obtain a live access token via signInWithPassword if session is not yet set
-      if (!session) {
-        const { data: signInData } = await supabase.auth.signInWithPassword({
-          email,
-          password: input.password,
-        });
-        if (signInData?.session) {
-          session = signInData.session;
-          authUserId = signInData.user?.id || authUserId;
-        }
-      }
-
-      // 2. Sync profile to public.users table or use metadata
+      // Sync profile to public.users table
       let userProfile: User;
       try {
         const userRepo = getUserRepository();
@@ -143,17 +99,26 @@ export class AuthService {
         };
       }
 
-      const token = session?.access_token || createMemoryToken(userProfile);
+      // Check if user is already verified (e.g. if email confirmation is disabled on Supabase instance)
+      const isVerified = Boolean(signUpData.user?.email_confirmed_at || signUpData.user?.confirmed_at);
+      if (isVerified && signUpData.session?.access_token) {
+        return {
+          user: userProfile,
+          token: signUpData.session.access_token,
+          refreshToken: signUpData.session.refresh_token,
+          expiresIn: signUpData.session.expires_in,
+          requiresVerification: false,
+        };
+      }
 
+      // Default: Requires email verification, no session token issued
       return {
         user: userProfile,
-        token,
-        refreshToken: session?.refresh_token,
-        expiresIn: session?.expires_in,
+        requiresVerification: true,
       };
     }
 
-    // Memory provider fallback
+    // Memory provider fallback for offline testing
     const userRepo = getUserRepository();
     const existing = await userRepo.getByEmail(email);
     if (existing) {
@@ -172,16 +137,14 @@ export class AuthService {
       joinedDate: new Date().toISOString().split('T')[0],
     });
 
-    const token = createMemoryToken(newUser);
     return {
       user: newUser,
-      token,
-      expiresIn: 604800,
+      requiresVerification: true,
     };
   }
 
   /**
-   * Authenticate user with email and password
+   * Authenticate user with email and password (enforces email verification)
    */
   public async login(input: LoginInput): Promise<AuthResponseData> {
     const provider = getDataProvider();
@@ -235,10 +198,24 @@ export class AuthService {
         }
       }
 
-      if (signInError || !signInData?.session) {
+      if (signInError || !signInData?.user || !signInData?.session) {
         throw new AppError(
           signInError?.message || 'Invalid email or password. Please check your credentials.',
           401
+        );
+      }
+
+      // Mandate email verification: check email_confirmed_at
+      const isEmailVerified = Boolean(
+        signInData.user.email_confirmed_at || signInData.user.confirmed_at
+      );
+
+      if (!isEmailVerified) {
+        // Immediately sign out unverified user session
+        await supabase.auth.signOut().catch(() => null);
+        throw new AppError(
+          'Please verify your email address before logging in. We have sent a verification link to your email.',
+          403
         );
       }
 
@@ -278,10 +255,11 @@ export class AuthService {
         token: signInData.session.access_token,
         refreshToken: signInData.session.refresh_token,
         expiresIn: signInData.session.expires_in,
+        requiresVerification: false,
       };
     }
 
-    // Memory provider fallback
+    // Memory provider fallback for testing
     const userRepo = getUserRepository();
     const user = await userRepo.getByEmail(email);
     if (!user) {
@@ -293,7 +271,32 @@ export class AuthService {
       user,
       token,
       expiresIn: 604800,
+      requiresVerification: false,
     };
+  }
+
+  /**
+   * Resend signup verification email
+   */
+  public async resendVerificationEmail(email: string): Promise<void> {
+    const cleanEmail = email.trim().toLowerCase();
+    const provider = getDataProvider();
+
+    if (provider === 'supabase' && isSupabaseConfigured()) {
+      const supabase = getSupabaseClient();
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: cleanEmail,
+      });
+
+      if (error) {
+        console.warn(`Supabase auth resend warning for ${cleanEmail}: ${error.message}`);
+        // Ignore rate-limit or email delivery warnings in test/demo mode while attempting resend
+        if (error.message.toLowerCase().includes('invalid') && !error.message.toLowerCase().includes('rate')) {
+          throw new AppError(`Failed to resend verification email: ${error.message}`, 400);
+        }
+      }
+    }
   }
 
   /**
@@ -347,12 +350,13 @@ export class AuthService {
         user,
         token,
         expiresIn: 604800,
+        requiresVerification: false,
       };
     }
   }
 
   /**
-   * Verify an authentication token and return the User profile
+   * Verify an authentication token and return the User profile (rejects unverified emails)
    */
   public async verifyToken(token: string): Promise<User | null> {
     if (!token || typeof token !== 'string') {
@@ -383,6 +387,13 @@ export class AuthService {
         }
 
         const authUser = data.user;
+
+        // Enforce email verification check server-side on token validation
+        const isVerified = Boolean(authUser.email_confirmed_at || authUser.confirmed_at);
+        if (!isVerified) {
+          return null;
+        }
+
         let profile: User | null = null;
         try {
           const userRepo = getUserRepository();

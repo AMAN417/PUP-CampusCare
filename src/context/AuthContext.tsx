@@ -3,6 +3,7 @@ import type { User, UserRole } from '../types';
 import { storage } from '../utils/storage';
 import { DEMO_USERS } from '../data/mockData';
 import { authApi } from '../api/authApi';
+import type { AuthResult } from '../api/authApi';
 import { getAuthToken, setAuthToken } from '../api/apiClient';
 
 interface AuthContextType {
@@ -12,7 +13,8 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password?: string, preferredRole?: UserRole) => Promise<boolean>;
   loginAsDemo: (role: UserRole) => Promise<void>;
-  register: (userData: Partial<User>, password?: string) => Promise<User>;
+  register: (userData: Partial<User>, password?: string) => Promise<AuthResult>;
+  resendVerificationEmail: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (updatedData: Partial<User>) => void;
 }
@@ -40,11 +42,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(currentUser);
           storage.setCurrentUser(currentUser);
         }
-      } catch (err) {
-        console.warn('Session restoration failed, checking local cache:', err);
-        // If token is expired or unauthorized, clear token
-        if ((err as any)?.status === 401) {
+      } catch (err: any) {
+        console.warn('Session restoration failed:', err);
+        // If token is expired or unauthorized / unverified, clear session
+        if (err?.status === 401 || err?.status === 403) {
           setAuthToken(null);
+          setUser(null);
+          storage.setCurrentUser(null);
         }
       } finally {
         if (isMounted) {
@@ -67,38 +71,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user]);
 
   const login = useCallback(
-    async (email: string, password: string = 'password123', preferredRole?: UserRole): Promise<boolean> => {
+    async (email: string, password: string = 'password123'): Promise<boolean> => {
       try {
-        setLoading(true);
         const result = await authApi.login({ email, password });
-        if (result?.user) {
+
+        if (result?.requiresVerification) {
+          setAuthToken(null);
+          setUser(null);
+          storage.setCurrentUser(null);
+          throw new Error('Please verify your email address before logging in.');
+        }
+
+        if (result?.user && result?.token) {
           setUser(result.user);
           storage.setCurrentUser(result.user);
           return true;
         }
       } catch (apiErr: any) {
-        console.warn('API login failed, checking fallback:', apiErr);
-
-        // Fallback to local storage for offline / mock testing
-        const users = storage.getUsers();
-        let found = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-
-        if (!found) {
-          if (preferredRole === 'admin' || email.includes('admin')) {
-            found = DEMO_USERS.find((u) => u.role === 'admin');
-          } else {
-            found = DEMO_USERS[0];
-          }
-        }
-
-        if (found) {
-          setUser(found);
-          storage.setCurrentUser(found);
-          return true;
-        }
+        setAuthToken(null);
+        setUser(null);
+        storage.setCurrentUser(null);
         throw apiErr;
-      } finally {
-        setLoading(false);
       }
       return false;
     },
@@ -107,7 +100,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginAsDemo = useCallback(async (targetRole: UserRole): Promise<void> => {
     try {
-      setLoading(true);
       const result = await authApi.demoLogin(targetRole);
       if (result?.user) {
         setUser(result.user);
@@ -119,62 +111,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const target = DEMO_USERS.find((u) => u.role === targetRole) || DEMO_USERS[0];
       setUser(target);
       storage.setCurrentUser(target);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
   const register = useCallback(
-    async (userData: Partial<User>, password: string = 'password123'): Promise<User> => {
-      try {
-        setLoading(true);
-        const result = await authApi.register({
-          name: userData.name || 'New Student',
-          email: userData.email || `student.${Date.now()}@demo.pup.ac.in`,
-          password,
-          rollNo: userData.rollNo,
-          department: userData.department,
-          hostel: userData.hostel,
-          phone: userData.phone,
-        });
-
-        if (result?.user) {
-          setUser(result.user);
-          storage.setCurrentUser(result.user);
-          return result.user;
-        }
-      } catch (apiErr: any) {
-        console.warn('API registration unavailable, saving to local fallback storage:', apiErr);
-        // If it's a conflict or bad request, rethrow so the form can display it
-        if (apiErr?.status === 409 || apiErr?.status === 400) {
-          throw apiErr;
-        }
-      } finally {
-        setLoading(false);
-      }
-
-      // Local fallback creation
-      const newUser: User = {
-        id: `user-${Date.now()}`,
+    async (userData: Partial<User>, password: string = 'password123'): Promise<AuthResult> => {
+      const result = await authApi.register({
         name: userData.name || 'New Student',
         email: userData.email || `student.${Date.now()}@demo.pup.ac.in`,
-        role: (userData.role as UserRole) || 'student',
-        rollNo: userData.rollNo || `PUP2026-${Math.floor(1000 + Math.random() * 9000)}`,
-        department: userData.department || 'Computer Science & Engineering',
-        hostel: userData.hostel || 'Hostel Block A',
-        phone: userData.phone || '+91 98000 00000',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        joinedDate: new Date().toISOString().slice(0, 10),
-        status: 'Active',
-      };
+        password,
+        rollNo: userData.rollNo,
+        department: userData.department,
+        hostel: userData.hostel,
+        phone: userData.phone,
+      });
 
-      storage.saveUser(newUser);
-      setUser(newUser);
-      storage.setCurrentUser(newUser);
-      return newUser;
+      // Ensure session state is clear on registration until email is verified
+      setAuthToken(null);
+      setUser(null);
+      storage.setCurrentUser(null);
+      return result;
     },
     []
   );
+
+  const resendVerificationEmail = useCallback(async (email: string): Promise<void> => {
+    await authApi.resendVerification(email);
+  }, []);
 
   const logout = useCallback(async (): Promise<void> => {
     try {
@@ -182,6 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setUser(null);
       setAuthToken(null);
+      storage.setCurrentUser(null);
     }
   }, []);
 
@@ -206,6 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         loginAsDemo,
         register,
+        resendVerificationEmail,
         logout,
         updateProfile,
       }}

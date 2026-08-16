@@ -3,9 +3,10 @@ import type { User, UserRole } from '../types';
 
 export interface AuthResult {
   user: User;
-  token: string;
+  token?: string;
   refreshToken?: string;
   expiresIn?: number;
+  requiresVerification?: boolean;
 }
 
 export interface RegisterPayload {
@@ -39,7 +40,7 @@ export const authApi = {
       role: 'student',
     });
 
-    if (data?.token) {
+    if (data?.token && !data?.requiresVerification) {
       setAuthToken(data.token);
     }
     return data;
@@ -54,10 +55,17 @@ export const authApi = {
       password: payload.password || 'password123',
     });
 
-    if (data?.token) {
+    if (data?.token && !data?.requiresVerification) {
       setAuthToken(data.token);
     }
     return data;
+  },
+
+  /**
+   * Resend verification email
+   */
+  resendVerification: async (email: string): Promise<void> => {
+    await apiClient.post('/auth/resend-verification', { email });
   },
 
   /**
