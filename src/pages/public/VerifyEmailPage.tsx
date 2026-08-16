@@ -27,18 +27,29 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({
   const [resending, setResending] = useState(false);
   const [resentSuccess, setResentSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [cooldown, setCooldown] = useState(0);
+
+  React.useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const handleResend = async () => {
     if (!email) {
       setErrorMessage('No email address provided for resending verification.');
       return;
     }
+    if (cooldown > 0 || resending) return;
 
     try {
       setResending(true);
       setErrorMessage('');
       await resendVerificationEmail(email);
       setResentSuccess(true);
+      setCooldown(60);
       success(
         'Verification Email Sent',
         `A new link has been sent to ${email}. Please check your inbox.`

@@ -60,7 +60,11 @@ export class AuthService {
       });
 
       if (signUpError) {
-        if (signUpError.message.toLowerCase().includes('already registered')) {
+        const msg = signUpError.message.toLowerCase();
+        if (msg.includes('rate limit') || signUpError.status === 429) {
+          throw new AppError('Email rate limit exceeded. Please wait a few minutes before trying again.', 429);
+        }
+        if (msg.includes('already registered')) {
           throw new AppError('An account with this email already exists. Please sign in instead.', 409);
         }
         throw new AppError(`Registration failed: ${signUpError.message}`, 400);
@@ -214,7 +218,7 @@ export class AuthService {
         // Immediately sign out unverified user session
         await supabase.auth.signOut().catch(() => null);
         throw new AppError(
-          'Please verify your email address before logging in. We have sent a verification link to your email.',
+          'Please verify your email before accessing CampusCare.',
           403
         );
       }

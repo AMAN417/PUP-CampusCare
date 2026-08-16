@@ -20,10 +20,36 @@ const nodeEnv = (process.env.NODE_ENV || 'development').toLowerCase() as
   | 'production'
   | 'test';
 
-const parseCorsOrigin = (rawOrigin?: string): string | string[] => {
-  if (!rawOrigin) {
-    return nodeEnv === 'production' ? 'http://localhost:5173' : '*';
+const parseCorsOrigin = (rawOrigin?: string): any => {
+  if (nodeEnv === 'development' || nodeEnv === 'test') {
+    const customOrigins = rawOrigin
+      ? rawOrigin.split(',').map((o) => o.trim())
+      : [
+          'http://localhost:5173',
+          'http://localhost:5174',
+          'http://localhost:5175',
+          'http://127.0.0.1:5173',
+          'http://127.0.0.1:5174',
+          'http://127.0.0.1:5175',
+        ];
+
+    return (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void
+    ) => {
+      // Allow non-browser agents (CLI, Postman, test-api, etc.)
+      if (!origin) return callback(null, true);
+      if (
+        customOrigins.includes(origin) ||
+        /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      callback(null, false);
+    };
   }
+
+  if (!rawOrigin || rawOrigin === '*') return '*';
   if (rawOrigin.includes(',')) {
     return rawOrigin.split(',').map((o) => o.trim());
   }
