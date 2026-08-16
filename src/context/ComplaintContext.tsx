@@ -124,7 +124,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return true;
       }
       return false;
-    } catch (err) {
+    } catch {
       toastError('Error updating status');
       return false;
     }
@@ -144,7 +144,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return true;
       }
       return false;
-    } catch (err) {
+    } catch {
       toastError('Error assigning officer');
       return false;
     }
@@ -160,7 +160,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return true;
       }
       return false;
-    } catch (err) {
+    } catch {
       toastError('Failed to post comment');
       return false;
     }

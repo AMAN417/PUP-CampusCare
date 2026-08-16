@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { ComplaintProvider } from './context/ComplaintContext';
 import { ToastProvider } from './context/ToastContext';
 import { DashboardLayout } from './components/layout/DashboardLayout';
@@ -26,11 +26,9 @@ import { AdminComplaintDetails } from './pages/admin/AdminComplaintDetails';
 import { AnalyticsPage } from './pages/admin/AnalyticsPage';
 import { UserManagement } from './pages/admin/UserManagement';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import type { ComplaintCategory, ComplaintStatus } from './types';
 
 const MainApp: React.FC = () => {
-  const { isAuthenticated, role } = useAuth();
-
   // Route state initialized from window location hash or default
   const getInitialPath = (): string => {
     if (typeof window !== 'undefined') {
@@ -114,7 +112,7 @@ const MainApp: React.FC = () => {
     }
 
     if (pathPart === '/student/submit') {
-      const defaultCategory = queryParams.get('category') as any;
+      const defaultCategory = queryParams.get('category') as ComplaintCategory | null;
       return (
         <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
           <SubmitComplaint onNavigate={navigate} defaultCategory={defaultCategory || undefined} />
@@ -166,7 +164,7 @@ const MainApp: React.FC = () => {
     }
 
     if (pathPart === '/admin/complaints') {
-      const statusParam = queryParams.get('status') as any;
+      const statusParam = queryParams.get('status') as ComplaintStatus | 'ALL' | null;
       return (
         <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
           <ComplaintsManagement onNavigate={navigate} initialStatus={statusParam || 'ALL'} />

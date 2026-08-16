@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useComplaints } from '../../context/ComplaintContext';
 import { ComplaintTable } from '../../components/complaints/ComplaintTable';
 import { SearchBar } from '../../components/common/SearchBar';
-import { FilterBar, FilterState } from '../../components/common/FilterBar';
+import { FilterBar } from '../../components/common/FilterBar';
+import type { FilterState } from '../../components/common/FilterBar';
 import { Button } from '../../components/common/Button';
-import { Download, PlusCircle, ShieldAlert, RotateCcw } from 'lucide-react';
-import { ComplaintStatus } from '../../types';
+import { Download } from 'lucide-react';
+import type { ComplaintStatus } from '../../types';
 
 interface ComplaintsManagementProps {
   onNavigate: (path: string) => void;

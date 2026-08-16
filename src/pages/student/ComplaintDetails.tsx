@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useComplaints } from '../../context/ComplaintContext';
-import { useAuth } from '../../context/AuthContext';
 import { StatusBadge, PriorityBadge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
-import { Card, CardHeader, CardBody } from '../../components/common/Card';
+import { Card } from '../../components/common/Card';
 import { Timeline } from '../../components/complaints/Timeline';
 import { CommentSection } from '../../components/complaints/CommentSection';
 import { Modal } from '../../components/common/Modal';
@@ -16,10 +15,7 @@ import {
   Paperclip,
   CheckCircle2,
   Clock,
-  Shield,
-  Maximize2,
   AlertCircle,
-  Eye,
 } from 'lucide-react';
 import { CATEGORY_METADATA } from '../../data/mockData';
 
@@ -33,7 +29,6 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
   onNavigate,
 }) => {
   const { getComplaintById, addComment, updateStatus } = useComplaints();
-  const { user } = useAuth();
 
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [timelineMode, setTimelineMode] = useState<'horizontal' | 'vertical'>('horizontal');

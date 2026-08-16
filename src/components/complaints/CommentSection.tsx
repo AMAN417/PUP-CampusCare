@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
-import { Comment, UserRole } from '../../types';
+import type { Comment } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../common/Button';
 import { Send, Shield, GraduationCap, Lock, MessageSquare } from 'lucide-react';
 
 interface CommentSectionProps {
-  complaintId: string;
+  complaintId?: string;
   comments: Comment[];
   onAddComment: (message: string, isInternal?: boolean) => boolean;
 }
 
 export const CommentSection: React.FC<CommentSectionProps> = ({
-  complaintId,
   comments,
   onAddComment,
 }) => {
@@ -144,7 +143,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                     </div>
                     <div>
                       <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                        {comment.userName}
+                        {comment.userName}{isMe ? ' (You)' : ''}
                       </span>
                       <span
                         style={{

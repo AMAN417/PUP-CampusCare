@@ -4,11 +4,11 @@ import { useComplaints } from '../../context/ComplaintContext';
 import { ComplaintCard } from '../../components/complaints/ComplaintCard';
 import { ComplaintTable } from '../../components/complaints/ComplaintTable';
 import { SearchBar } from '../../components/common/SearchBar';
-import { FilterBar, FilterState } from '../../components/common/FilterBar';
+import { FilterBar } from '../../components/common/FilterBar';
+import type { FilterState } from '../../components/common/FilterBar';
 import { Button } from '../../components/common/Button';
-import { PlusCircle, LayoutGrid, List, FileText } from 'lucide-react';
+import { PlusCircle, LayoutGrid, List } from 'lucide-react';
 import { EmptyState } from '../../components/common/EmptyState';
-import { ComplaintCategory, ComplaintStatus, Priority } from '../../types';
 
 interface MyComplaintsProps {
   onNavigate: (path: string) => void;

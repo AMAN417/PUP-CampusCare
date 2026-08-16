@@ -2,20 +2,14 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useComplaints } from '../../context/ComplaintContext';
 import { useToast } from '../../context/ToastContext';
-import { Card, CardHeader, CardBody } from '../../components/common/Card';
+import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import {
-  User,
   Mail,
-  Phone,
   BookOpen,
-  Home,
   Calendar,
   ShieldCheck,
   RotateCcw,
-  CheckCircle2,
-  FileText,
-  Clock,
   Save,
 } from 'lucide-react';
 import { storage } from '../../utils/storage';
@@ -25,7 +19,7 @@ interface ProfilePageProps {
 }
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
-  const { user, updateProfile, logout } = useAuth();
+  const { user, updateProfile } = useAuth();
   const { complaints, refreshComplaints } = useComplaints();
   const { success, info } = useToast();
 
@@ -36,7 +30,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   // Student metrics
   const myComplaints = complaints.filter((c) => c.studentId === user?.id || user?.role === 'admin');
   const resolvedCount = myComplaints.filter((c) => c.status === 'Resolved' || c.status === 'Closed').length;
-  const activeCount = myComplaints.length - resolvedCount;
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();

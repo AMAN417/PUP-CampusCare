@@ -1,31 +1,18 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { User, UserRole } from '../../types';
+import type { User, UserRole } from '../../types';
 import { storage } from '../../utils/storage';
-import { Card, CardHeader } from '../../components/common/Card';
+import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { SearchBar } from '../../components/common/SearchBar';
 import { Modal } from '../../components/common/Modal';
-import {
-  Users,
-  UserPlus,
-  Shield,
-  GraduationCap,
-  BookOpen,
-  Mail,
-  Phone,
-  CheckCircle2,
-  XCircle,
-  MoreVertical,
-} from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 
 interface UserManagementProps {
-  onNavigate: (path: string) => void;
+  onNavigate?: (path: string) => void;
 }
 
-export const UserManagement: React.FC<UserManagementProps> = ({ onNavigate }) => {
-  const { user: currentUser } = useAuth();
+export const UserManagement: React.FC<UserManagementProps> = () => {
   const { success } = useToast();
 
   const [users, setUsers] = useState<User[]>(() => storage.getUsers());

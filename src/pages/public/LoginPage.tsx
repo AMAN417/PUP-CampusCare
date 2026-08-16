@@ -4,7 +4,7 @@ import { useToast } from '../../context/ToastContext';
 import { PUPLogo } from '../../components/common/PUPLogo';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
-import { GraduationCap, Shield, Mail, Lock, ArrowRight, UserCheck, AlertCircle } from 'lucide-react';
+import { GraduationCap, Shield, Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
 
 interface LoginPageProps {
   onNavigate: (path: string) => void;

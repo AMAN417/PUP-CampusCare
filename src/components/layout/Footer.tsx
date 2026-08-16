@@ -1,6 +1,6 @@
 import React from 'react';
 import { PUPLogo } from '../common/PUPLogo';
-import { Shield, Phone, Mail, MapPin, ExternalLink, Heart } from 'lucide-react';
+import { Phone, Mail, MapPin } from 'lucide-react';
 
 interface FooterProps {
   onNavigate?: (path: string) => void;

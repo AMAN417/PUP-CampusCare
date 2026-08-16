@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useComplaints } from '../../context/ComplaintContext';
 import { CATEGORY_METADATA } from '../../data/mockData';
-import { ComplaintCategory } from '../../types';
+import type { ComplaintCategory } from '../../types';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
 import {
@@ -14,12 +14,9 @@ import {
   Clock,
   ShieldCheck,
   Zap,
-  Users,
   Smartphone,
-  Layers,
   Sparkles,
   FileCheck,
-  Building,
   Home,
   GraduationCap,
   Droplets,
@@ -56,7 +53,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
   // Calculate live statistics from local demo data
   const totalComplaints = complaints.length;
   const resolvedComplaints = complaints.filter((c) => c.status === 'Resolved' || c.status === 'Closed').length;
-  const inProgressComplaints = complaints.filter((c) => c.status === 'In Progress').length;
   const resolutionRate = totalComplaints > 0 ? Math.round((resolvedComplaints / totalComplaints) * 100) : 94;
 
   const handleTrackSubmit = (e: React.FormEvent) => {
@@ -330,7 +326,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               icon: <CheckCircle2 size={24} />,
               color: '#059669',
             },
-          ].map((item, index) => (
+          ].map((item) => (
             <Card
               key={item.step}
               interactive={true}

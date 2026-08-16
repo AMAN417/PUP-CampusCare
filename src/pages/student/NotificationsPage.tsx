@@ -10,7 +10,6 @@ import {
   MessageSquare,
   ShieldAlert,
   UserCheck,
-  Sparkles,
   ArrowRight,
 } from 'lucide-react';
 

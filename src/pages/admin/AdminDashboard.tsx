@@ -15,14 +15,10 @@ import {
   ArrowRight,
   Download,
   ShieldCheck,
-  Building,
-  Users,
   BarChart3,
   MapPin,
-  ExternalLink,
 } from 'lucide-react';
-import { CATEGORY_METADATA, DEMO_DEPARTMENTS } from '../../data/mockData';
-import { ComplaintCategory } from '../../types';
+import { DEMO_DEPARTMENTS } from '../../data/mockData';
 
 interface AdminDashboardProps {
   onNavigate: (path: string) => void;

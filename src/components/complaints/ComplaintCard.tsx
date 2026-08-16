@@ -1,8 +1,8 @@
 import React from 'react';
-import { Complaint } from '../../types';
+import type { Complaint } from '../../types';
 import { StatusBadge, PriorityBadge } from '../common/Badge';
 import { Card } from '../common/Card';
-import { MapPin, Calendar, ArrowRight, MessageSquare, Paperclip, User } from 'lucide-react';
+import { MapPin, Calendar, ArrowRight, MessageSquare, Paperclip } from 'lucide-react';
 import { CATEGORY_METADATA } from '../../data/mockData';
 
 interface ComplaintCardProps {

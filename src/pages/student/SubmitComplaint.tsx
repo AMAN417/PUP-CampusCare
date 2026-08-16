@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useComplaints } from '../../context/ComplaintContext';
-import { useToast } from '../../context/ToastContext';
-import { ComplaintCategory, Priority } from '../../types';
+import type { ComplaintCategory, Priority } from '../../types';
 import { CATEGORY_METADATA } from '../../data/mockData';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
@@ -11,9 +10,7 @@ import {
   Upload,
   X,
   CheckCircle2,
-  AlertTriangle,
   ArrowRight,
-  FileText,
   MapPin,
   Image as ImageIcon,
   Flame,
@@ -52,7 +49,6 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
   defaultCategory = 'Hostel',
 }) => {
   const { createComplaint } = useComplaints();
-  const { success } = useToast();
 
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<ComplaintCategory>(defaultCategory);

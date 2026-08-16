@@ -4,7 +4,6 @@ import { useComplaints } from '../../context/ComplaintContext';
 import { StatCard } from '../../components/common/StatCard';
 import { Button } from '../../components/common/Button';
 import { Card, CardHeader, CardBody } from '../../components/common/Card';
-import { ComplaintCard } from '../../components/complaints/ComplaintCard';
 import { StatusBadge, PriorityBadge } from '../../components/common/Badge';
 import {
   PlusCircle,
@@ -12,12 +11,9 @@ import {
   Wrench,
   CheckCircle2,
   FileText,
-  Bell,
   ArrowRight,
   Sparkles,
   MapPin,
-  Calendar,
-  AlertTriangle,
 } from 'lucide-react';
 import { EmptyState } from '../../components/common/EmptyState';
 

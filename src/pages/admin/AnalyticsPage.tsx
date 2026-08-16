@@ -1,27 +1,23 @@
 import React from 'react';
 import { useComplaints } from '../../context/ComplaintContext';
-import { Card, CardHeader, CardBody } from '../../components/common/Card';
+import { Card, CardHeader } from '../../components/common/Card';
 import { StatCard } from '../../components/common/StatCard';
 import { Button } from '../../components/common/Button';
 import {
-  BarChart3,
-  PieChart,
-  TrendingUp,
   Clock,
   CheckCircle2,
   Download,
   Shield,
   Layers,
-  ArrowUpRight,
 } from 'lucide-react';
 import { CATEGORY_METADATA, DEMO_DEPARTMENTS } from '../../data/mockData';
-import { ComplaintCategory, ComplaintStatus } from '../../types';
+import type { ComplaintCategory, ComplaintStatus } from '../../types';
 
 interface AnalyticsPageProps {
-  onNavigate: (path: string) => void;
+  onNavigate?: (path: string) => void;
 }
 
-export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
+export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
   const { complaints, exportCSV } = useComplaints();
 
   const total = complaints.length;
@@ -303,22 +299,22 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: '140px' }}>
                   {/* Total Bar */}
                   <div
+                    title={`${t.count} Total`}
                     style={{
                       width: '24px',
                       height: `${Math.max(heightPercent, 10)}%`,
                       background: 'var(--pup-maroon)',
                       borderRadius: '4px 4px 0 0',
-                      title: `${t.count} Total`,
                     }}
                   />
                   {/* Resolved Bar */}
                   <div
+                    title={`${t.resolved} Resolved`}
                     style={{
                       width: '24px',
                       height: `${Math.max(resolvedPercent, 10)}%`,
                       background: '#059669',
                       borderRadius: '4px 4px 0 0',
-                      title: `${t.resolved} Resolved`,
                     }}
                   />
                 </div>

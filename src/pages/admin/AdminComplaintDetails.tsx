@@ -1,27 +1,17 @@
 import React, { useState } from 'react';
 import { useComplaints } from '../../context/ComplaintContext';
-import { useAuth } from '../../context/AuthContext';
-import { ComplaintStatus, Priority } from '../../types';
+import type { ComplaintStatus } from '../../types';
 import { StatusBadge, PriorityBadge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
-import { Card, CardHeader, CardBody } from '../../components/common/Card';
+import { Card } from '../../components/common/Card';
 import { Timeline } from '../../components/complaints/Timeline';
 import { CommentSection } from '../../components/complaints/CommentSection';
 import { Modal } from '../../components/common/Modal';
 import {
   ArrowLeft,
-  MapPin,
-  Calendar,
-  User,
-  Building,
-  Paperclip,
   CheckCircle2,
-  Clock,
-  Shield,
-  Send,
   AlertCircle,
   Wrench,
-  Flame,
   UserCheck,
 } from 'lucide-react';
 import { DEMO_DEPARTMENTS, CATEGORY_METADATA } from '../../data/mockData';
@@ -36,7 +26,6 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
   onNavigate,
 }) => {
   const { getComplaintById, updateStatus, assignOfficer, addComment } = useComplaints();
-  const { user } = useAuth();
 
   const complaint = getComplaintById(complaintId);
 

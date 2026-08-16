@@ -19,6 +19,15 @@ interface SidebarProps {
   onCloseMobile?: () => void;
 }
 
+interface SidebarLink {
+  title: string;
+  path: string;
+  icon: React.ReactNode;
+  highlight?: boolean;
+  badge?: number;
+  badgeColor?: string;
+}
+
 export const Sidebar: React.FC<SidebarProps> = ({ currentPath, onNavigate, onCloseMobile }) => {
   const { role, user } = useAuth();
   const { complaints, unreadNotificationCount } = useComplaints();
@@ -38,7 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, onNavigate, onClo
     }
   };
 
-  const studentLinks = [
+  const studentLinks: SidebarLink[] = [
     {
       title: 'Dashboard',
       path: '/student/dashboard',
@@ -70,7 +79,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, onNavigate, onClo
     },
   ];
 
-  const adminLinks = [
+  const adminLinks: SidebarLink[] = [
     {
       title: 'Admin Overview',
       path: '/admin/dashboard',
@@ -95,7 +104,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, onNavigate, onClo
     },
   ];
 
-  const links = role === 'admin' ? adminLinks : studentLinks;
+  const links: SidebarLink[] = role === 'admin' ? adminLinks : studentLinks;
 
   return (
     <aside
