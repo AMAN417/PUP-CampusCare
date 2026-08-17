@@ -39,9 +39,10 @@ export const ComplaintCard: React.FC<ComplaintCardProps> = ({ complaint, onOpen 
             justifyContent: 'space-between',
             marginBottom: '0.75rem',
             gap: '0.5rem',
+            flexWrap: 'wrap',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <span
               style={{
                 fontFamily: 'monospace',

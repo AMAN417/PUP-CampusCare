@@ -24,6 +24,7 @@ import {
   Building2,
   ShieldAlert,
   HelpCircle,
+  AlertCircle,
 } from 'lucide-react';
 
 interface SubmitComplaintProps {
@@ -59,6 +60,7 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
     { id: string; name: string; size: string; type: string; url: string; uploadedAt: string }[]
   >([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [createdComplaintId, setCreatedComplaintId] = useState<string | null>(null);
 
   // Common campus locations for quick selection
@@ -107,9 +109,10 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !description.trim() || !location.trim()) return;
+    if (!title.trim() || !description.trim() || !location.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
       const created = await createComplaint({
         title: title.trim(),
@@ -123,8 +126,11 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
       if (created?.id) {
         setCreatedComplaintId(created.id);
       }
-    } catch (err) {
-      console.error('Error submitting:', err);
+    } catch (err: any) {
+      console.error('Error submitting complaint:', err);
+      setSubmitError(
+        err?.message || 'Failed to submit complaint. Please check your connection and try again.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -135,6 +141,7 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
     setLocation('');
     setDescription('');
     setAttachments([]);
+    setSubmitError(null);
     setCreatedComplaintId(null);
   };
 
@@ -149,6 +156,28 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
       </div>
 
       <Card style={{ padding: '2rem' }}>
+        {submitError && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              background: '#FEF2F2',
+              border: '1.5px solid #FCA5A5',
+              color: '#DC2626',
+              padding: '0.85rem 1rem',
+              borderRadius: 'var(--radius-md)',
+              marginBottom: '1.5rem',
+              fontSize: '0.875rem',
+            }}
+          >
+            <AlertCircle size={18} style={{ flexShrink: 0 }} />
+            <div>
+              <strong>Submission Error:</strong> {submitError}
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           {/* Title */}
           <div className="form-group">
@@ -160,6 +189,7 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Water cooler leaking on 2nd floor corridor"
               required
+              disabled={isSubmitting}
               maxLength={120}
             />
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
@@ -173,8 +203,8 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
-                gap: '0.6rem',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))',
+                gap: '0.5rem',
                 marginTop: '0.4rem',
               }}
             >
@@ -185,6 +215,7 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
                     key={cat}
                     type="button"
                     onClick={() => setCategory(cat)}
+                    disabled={isSubmitting}
                     style={{
                       display: 'flex',
                       flexDirection: 'column',
@@ -195,7 +226,8 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
                       border: `1.5px solid ${isSelected ? 'var(--pup-maroon)' : 'var(--border-light)'}`,
                       background: isSelected ? 'var(--pup-maroon-subtle)' : 'var(--bg-surface)',
                       color: isSelected ? 'var(--pup-maroon)' : 'var(--text-secondary)',
-                      cursor: 'pointer',
+                      cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                      opacity: isSubmitting ? 0.7 : 1,
                       fontSize: '0.8125rem',
                       fontWeight: isSelected ? 700 : 500,
                       transition: 'all var(--transition-fast)',
@@ -233,6 +265,7 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. Banda Singh Bahadur Hostel - Block C, Room 214"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -246,6 +279,7 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
                   key={loc}
                   type="button"
                   onClick={() => setLocation(loc)}
+                  disabled={isSubmitting}
                   style={{
                     background: 'var(--bg-main)',
                     border: '1px solid var(--border-light)',
@@ -253,7 +287,7 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
                     padding: '2px 8px',
                     fontSize: '0.7rem',
                     color: 'var(--text-secondary)',
-                    cursor: 'pointer',
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
                   }}
                 >
                   {loc}
@@ -268,7 +302,7 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
                 gap: '0.75rem',
               }}
             >
@@ -284,13 +318,15 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
                     key={p.level}
                     type="button"
                     onClick={() => setPriority(p.level)}
+                    disabled={isSubmitting}
                     style={{
                       padding: '0.75rem',
                       borderRadius: 'var(--radius-md)',
                       border: `1.5px solid ${isSelected ? p.color : 'var(--border-light)'}`,
                       background: isSelected ? p.bg : 'var(--bg-surface)',
                       textAlign: 'left',
-                      cursor: 'pointer',
+                      cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                      opacity: isSubmitting ? 0.7 : 1,
                       transition: 'all var(--transition-fast)',
                     }}
                   >
@@ -317,6 +353,7 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe what is wrong, when it started happening, and any specific equipment details..."
               required
+              disabled={isSubmitting}
             />
           </div>
 
@@ -337,11 +374,12 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
                 type="file"
                 accept="image/*,.pdf,.doc,.docx"
                 onChange={handleFileChange}
+                disabled={isSubmitting}
                 style={{
                   position: 'absolute',
                   inset: 0,
                   opacity: 0,
-                  cursor: 'pointer',
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
                   width: '100%',
                   height: '100%',
                 }}
@@ -404,11 +442,12 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
                     <button
                       type="button"
                       onClick={() => handleRemoveAttachment(att.id)}
+                      disabled={isSubmitting}
                       style={{
                         background: 'none',
                         border: 'none',
                         color: 'var(--text-muted)',
-                        cursor: 'pointer',
+                        cursor: isSubmitting ? 'not-allowed' : 'pointer',
                         padding: '2px',
                         display: 'flex',
                       }}
@@ -437,6 +476,7 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
             <Button
               type="button"
               variant="outline"
+              disabled={isSubmitting}
               onClick={() => onNavigate('/student/dashboard')}
             >
               Cancel
@@ -446,9 +486,10 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
               variant="primary"
               size="lg"
               isLoading={isSubmitting}
-              leftIcon={<PlusCircle size={18} />}
+              disabled={isSubmitting}
+              leftIcon={!isSubmitting ? <PlusCircle size={18} /> : undefined}
             >
-              Submit Complaint
+              {isSubmitting ? 'Submitting...' : 'Submit Complaint'}
             </Button>
           </div>
         </form>

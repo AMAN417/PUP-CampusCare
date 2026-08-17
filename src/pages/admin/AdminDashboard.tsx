@@ -18,6 +18,8 @@ import {
   BarChart3,
   MapPin,
 } from 'lucide-react';
+import { EmptyState } from '../../components/common/EmptyState';
+import { LoadingSkeleton } from '../../components/common/LoadingSkeleton';
 import { DEMO_DEPARTMENTS } from '../../data/mockData';
 
 interface AdminDashboardProps {
@@ -26,7 +28,7 @@ interface AdminDashboardProps {
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
   const { user } = useAuth();
-  const { complaints, exportCSV } = useComplaints();
+  const { complaints, exportCSV, loading } = useComplaints();
 
   // Calculate Admin Metrics
   const total = complaints.length;
@@ -203,71 +205,82 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            {urgentComplaints.map((item) => (
-              <Card
-                key={item.id}
-                interactive={true}
-                onClick={() => onNavigate(`/admin/complaints/${item.id}`)}
-                style={{
-                  padding: '1.25rem',
-                  borderLeft: `4px solid ${item.priority === 'Urgent' ? '#DC2626' : '#D97706'}`,
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: '0.5rem',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span
-                      style={{
-                        fontFamily: 'monospace',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        color: 'var(--pup-maroon)',
-                        background: 'var(--pup-maroon-subtle)',
-                        padding: '2px 6px',
-                        borderRadius: 'var(--radius-sm)',
-                      }}
-                    >
-                      {item.id}
-                    </span>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-                      {item.category}
-                    </span>
-                  </div>
-                  <PriorityBadge priority={item.priority} />
-                </div>
-
-                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.35rem' }}>
-                  {item.title}
-                </h4>
-
-                <div
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    fontSize: '0.75rem',
-                    color: 'var(--text-muted)',
-                    marginTop: '0.5rem',
-                    paddingTop: '0.5rem',
-                    borderTop: '1px solid var(--border-subtle)',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <MapPin size={12} style={{ color: 'var(--pup-maroon)' }} />
-                    <span>{item.location}</span>
-                  </div>
-
-                  <StatusBadge status={item.status} />
-                </div>
+            {loading && complaints.length === 0 ? (
+              <LoadingSkeleton type="card" count={3} />
+            ) : urgentComplaints.length === 0 ? (
+              <Card>
+                <EmptyState
+                  title="Triage Queue Clear"
+                  description="There are no urgent or high-priority complaints requiring immediate intervention at this time."
+                />
               </Card>
-            ))}
+            ) : (
+              urgentComplaints.map((item) => (
+                <Card
+                  key={item.id}
+                  interactive={true}
+                  onClick={() => onNavigate(`/admin/complaints/${item.id}`)}
+                  style={{
+                    padding: '1.25rem',
+                    borderLeft: `4px solid ${item.priority === 'Urgent' ? '#DC2626' : '#D97706'}`,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '0.5rem',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span
+                        style={{
+                          fontFamily: 'monospace',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          color: 'var(--pup-maroon)',
+                          background: 'var(--pup-maroon-subtle)',
+                          padding: '2px 6px',
+                          borderRadius: 'var(--radius-sm)',
+                        }}
+                      >
+                        {item.id}
+                      </span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                        {item.category}
+                      </span>
+                    </div>
+                    <PriorityBadge priority={item.priority} />
+                  </div>
+
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.35rem' }}>
+                    {item.title}
+                  </h4>
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      fontSize: '0.75rem',
+                      color: 'var(--text-muted)',
+                      marginTop: '0.5rem',
+                      paddingTop: '0.5rem',
+                      borderTop: '1px solid var(--border-subtle)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <MapPin size={12} style={{ color: 'var(--pup-maroon)' }} />
+                      <span>{item.location}</span>
+                    </div>
+
+                    <StatusBadge status={item.status} />
+                  </div>
+                </Card>
+              ))
+            )}
           </div>
         </div>
 

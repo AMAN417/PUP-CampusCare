@@ -16,6 +16,7 @@ import {
   MapPin,
 } from 'lucide-react';
 import { EmptyState } from '../../components/common/EmptyState';
+import { LoadingSkeleton } from '../../components/common/LoadingSkeleton';
 
 interface StudentDashboardProps {
   onNavigate: (path: string) => void;
@@ -23,7 +24,7 @@ interface StudentDashboardProps {
 
 export const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate }) => {
   const { user } = useAuth();
-  const { complaints, notifications } = useComplaints();
+  const { complaints, notifications, loading } = useComplaints();
 
   // Filter complaints for this student
   const studentComplaints = complaints.filter(
@@ -183,7 +184,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate }
             </Button>
           </div>
 
-          {recentComplaints.length === 0 ? (
+          {loading && studentComplaints.length === 0 ? (
+            <LoadingSkeleton type="card" count={3} />
+          ) : recentComplaints.length === 0 ? (
             <Card>
               <EmptyState
                 title="No complaints reported yet"

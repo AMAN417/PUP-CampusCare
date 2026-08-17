@@ -36,13 +36,15 @@ export const Timeline: React.FC<TimelineProps> = ({
 
   if (orientation === 'horizontal') {
     return (
-      <div style={{ width: '100%', padding: '1rem 0' }}>
+      <div style={{ width: '100%', overflowX: 'auto', padding: '0.5rem 0' }}>
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             position: 'relative',
+            minWidth: '500px',
+            padding: '0.75rem 1rem',
           }}
         >
           {/* Connecting Track Line */}

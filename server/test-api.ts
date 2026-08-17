@@ -82,9 +82,9 @@ const runTests = async () => {
       });
     }
 
-    // 3. Student Registration (Enforces Email Verification requirement)
+    // 3. Student Registration (Immediate access, session token issued, no email verification gate)
+    const studentEmail = `student.${Date.now()}.${Math.floor(Math.random() * 100000)}@demo.pup.ac.in`;
     {
-      const studentEmail = `student.${Date.now()}.${Math.floor(Math.random() * 100000)}@demo.pup.ac.in`;
       const registerPayload = {
         name: `Simranjeet Singh ${Math.floor(Math.random() * 1000)}`,
         email: studentEmail,
@@ -101,36 +101,57 @@ const runTests = async () => {
       });
       const body = (await res.json()) as any;
       const registeredUser = body.data?.user || null;
-      const requiresVerification = body.data?.requiresVerification === true;
+      const issuedToken = body.data?.token;
 
       const passed =
         res.status === 201 &&
         body.success === true &&
-        requiresVerification &&
+        Boolean(issuedToken) &&
         registeredUser?.role === 'student';
 
       results.push({
-        name: 'POST /api/campuscare/auth/register (Enforces mandatory email verification)',
+        name: 'POST /api/campuscare/auth/register (Immediate registration with JWT token)',
         passed,
         status: res.status,
-        details: `Registered: ${registeredUser?.name} (${registeredUser?.email}) | Requires Verification: ${requiresVerification}`,
+        details: `Registered: ${registeredUser?.name} (${registeredUser?.email}) | Token issued immediately: ${Boolean(issuedToken)}`,
       });
 
-      // 3b. Resend Verification Email Test
+      // 3b. Login with freshly registered credentials
       {
-        const resendRes = await fetch(`${BASE_URL}/auth/resend-verification`, {
+        const loginRes = await fetch(`${BASE_URL}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: studentEmail }),
+          body: JSON.stringify({ email: studentEmail, password: 'password123' }),
         });
-        const resendBody = (await resendRes.json()) as any;
-        const resendPassed = resendRes.status === 200 && resendBody.success === true;
+        const loginBody = (await loginRes.json()) as any;
+        const loginPassed =
+          loginRes.status === 200 &&
+          loginBody.success === true &&
+          Boolean(loginBody.data?.token);
 
         results.push({
-          name: 'POST /api/campuscare/auth/resend-verification (Resend verification link)',
-          passed: resendPassed,
-          status: resendRes.status,
-          details: `Message: "${resendBody.message}"`,
+          name: 'POST /api/campuscare/auth/login (Immediate login with new credentials)',
+          passed: loginPassed,
+          status: loginRes.status,
+          details: `Logged in user: ${loginBody.data?.user?.name} | Role: ${loginBody.data?.user?.role}`,
+        });
+      }
+
+      // 3c. Negative test: Login with invalid password (Expected 401)
+      {
+        const badLoginRes = await fetch(`${BASE_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: studentEmail, password: 'wrongpassword' }),
+        });
+        const badLoginBody = (await badLoginRes.json()) as any;
+        const badLoginPassed = badLoginRes.status === 401 && badLoginBody.success === false;
+
+        results.push({
+          name: 'Negative Auth Test: Wrong password (Expected 401 Unauthorized)',
+          passed: badLoginPassed,
+          status: badLoginRes.status,
+          details: `Correctly rejected invalid password: "${badLoginBody.error}"`,
         });
       }
     }

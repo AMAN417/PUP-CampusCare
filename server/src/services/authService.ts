@@ -34,7 +34,8 @@ const createMemoryToken = (user: User): string => {
 
 export class AuthService {
   /**
-   * Register a new student account requiring email verification
+   * Register a new student account — account is created and session issued immediately.
+   * Email verification is NOT required.
    */
   public async register(input: RegisterInput): Promise<AuthResponseData> {
     const provider = getDataProvider();
@@ -44,33 +45,34 @@ export class AuthService {
     if (provider === 'supabase' && isSupabaseConfigured()) {
       const supabase = getSupabaseClient();
 
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      // Use admin API with email_confirm:true so the account is immediately usable
+      // without requiring the user to click a verification link.
+      const { data: adminData, error: adminError } = await supabase.auth.admin.createUser({
         email,
         password: input.password,
-        options: {
-          data: {
-            name: input.name,
-            role,
-            roll_no: input.rollNo || null,
-            department: input.department || 'General',
-            hostel: input.hostel || null,
-            phone: input.phone || null,
-          },
+        email_confirm: true,
+        user_metadata: {
+          name: input.name,
+          role,
+          roll_no: input.rollNo || null,
+          department: input.department || 'General',
+          hostel: input.hostel || null,
+          phone: input.phone || null,
         },
       });
 
-      if (signUpError) {
-        const msg = signUpError.message.toLowerCase();
-        if (msg.includes('rate limit') || signUpError.status === 429) {
-          throw new AppError('Email rate limit exceeded. Please wait a few minutes before trying again.', 429);
-        }
-        if (msg.includes('already registered')) {
+      if (adminError) {
+        const msg = adminError.message.toLowerCase();
+        if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('email address is already')) {
           throw new AppError('An account with this email already exists. Please sign in instead.', 409);
         }
-        throw new AppError(`Registration failed: ${signUpError.message}`, 400);
+        if (msg.includes('rate limit') || adminError.status === 429) {
+          throw new AppError('Too many requests. Please wait a few minutes before trying again.', 429);
+        }
+        throw new AppError(`Registration failed: ${adminError.message}`, 400);
       }
 
-      const authUserId = signUpData.user?.id || null;
+      const authUserId = adminData.user?.id || null;
 
       // Sync profile to public.users table
       let userProfile: User;
@@ -103,22 +105,27 @@ export class AuthService {
         };
       }
 
-      // Check if user is already verified (e.g. if email confirmation is disabled on Supabase instance)
-      const isVerified = Boolean(signUpData.user?.email_confirmed_at || signUpData.user?.confirmed_at);
-      if (isVerified && signUpData.session?.access_token) {
+      // Immediately sign the user in to get a live session token
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password: input.password,
+      });
+
+      if (signInError || !signInData?.session) {
+        // Account was created but we couldn't produce a session — return partial success.
+        // The user can log in normally.
         return {
           user: userProfile,
-          token: signUpData.session.access_token,
-          refreshToken: signUpData.session.refresh_token,
-          expiresIn: signUpData.session.expires_in,
           requiresVerification: false,
         };
       }
 
-      // Default: Requires email verification, no session token issued
       return {
         user: userProfile,
-        requiresVerification: true,
+        token: signInData.session.access_token,
+        refreshToken: signInData.session.refresh_token,
+        expiresIn: signInData.session.expires_in,
+        requiresVerification: false,
       };
     }
 
@@ -141,14 +148,19 @@ export class AuthService {
       joinedDate: new Date().toISOString().split('T')[0],
     });
 
+    // Issue a token immediately — no verification gate in memory mode either
+    const token = createMemoryToken(newUser);
     return {
       user: newUser,
-      requiresVerification: true,
+      token,
+      expiresIn: 604800,
+      requiresVerification: false,
     };
   }
 
   /**
-   * Authenticate user with email and password (enforces email verification)
+   * Authenticate user with email and password.
+   * Email verification is NOT enforced — any valid account can log in immediately.
    */
   public async login(input: LoginInput): Promise<AuthResponseData> {
     const provider = getDataProvider();
@@ -209,20 +221,6 @@ export class AuthService {
         );
       }
 
-      // Mandate email verification: check email_confirmed_at
-      const isEmailVerified = Boolean(
-        signInData.user.email_confirmed_at || signInData.user.confirmed_at
-      );
-
-      if (!isEmailVerified) {
-        // Immediately sign out unverified user session
-        await supabase.auth.signOut().catch(() => null);
-        throw new AppError(
-          'Please verify your email before accessing CampusCare.',
-          403
-        );
-      }
-
       // Fetch or sync user profile
       let userProfile: User;
       try {
@@ -277,30 +275,6 @@ export class AuthService {
       expiresIn: 604800,
       requiresVerification: false,
     };
-  }
-
-  /**
-   * Resend signup verification email
-   */
-  public async resendVerificationEmail(email: string): Promise<void> {
-    const cleanEmail = email.trim().toLowerCase();
-    const provider = getDataProvider();
-
-    if (provider === 'supabase' && isSupabaseConfigured()) {
-      const supabase = getSupabaseClient();
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: cleanEmail,
-      });
-
-      if (error) {
-        console.warn(`Supabase auth resend warning for ${cleanEmail}: ${error.message}`);
-        // Ignore rate-limit or email delivery warnings in test/demo mode while attempting resend
-        if (error.message.toLowerCase().includes('invalid') && !error.message.toLowerCase().includes('rate')) {
-          throw new AppError(`Failed to resend verification email: ${error.message}`, 400);
-        }
-      }
-    }
   }
 
   /**
@@ -360,7 +334,8 @@ export class AuthService {
   }
 
   /**
-   * Verify an authentication token and return the User profile (rejects unverified emails)
+   * Verify an authentication token and return the User profile.
+   * Email verification status is NOT checked — any valid session token is accepted.
    */
   public async verifyToken(token: string): Promise<User | null> {
     if (!token || typeof token !== 'string') {
@@ -391,12 +366,6 @@ export class AuthService {
         }
 
         const authUser = data.user;
-
-        // Enforce email verification check server-side on token validation
-        const isVerified = Boolean(authUser.email_confirmed_at || authUser.confirmed_at);
-        if (!isVerified) {
-          return null;
-        }
 
         let profile: User | null = null;
         try {

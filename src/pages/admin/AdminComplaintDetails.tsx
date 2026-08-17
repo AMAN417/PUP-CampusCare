@@ -353,10 +353,11 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
                 variant="primary"
                 size="md"
                 isLoading={isUpdatingStatus}
+                disabled={isUpdatingStatus}
                 style={{ width: '100%' }}
-                rightIcon={<CheckCircle2 size={16} />}
+                rightIcon={!isUpdatingStatus ? <CheckCircle2 size={16} /> : undefined}
               >
-                Apply Status Change
+                {isUpdatingStatus ? 'Saving Status...' : 'Apply Status Change'}
               </Button>
             </form>
           </Card>
@@ -376,6 +377,7 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
                 <select
                   className="form-select"
                   value={selectedDepartment}
+                  disabled={isAssigning}
                   onChange={(e) => handleDeptChange(e.target.value)}
                 >
                   {DEMO_DEPARTMENTS.map((dept) => (
@@ -392,6 +394,7 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
                   type="text"
                   className="form-input"
                   value={selectedOfficer}
+                  disabled={isAssigning}
                   onChange={(e) => setSelectedOfficer(e.target.value)}
                   placeholder="Officer Name"
                   required
@@ -403,9 +406,10 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
                 variant="secondary"
                 size="md"
                 isLoading={isAssigning}
+                disabled={isAssigning}
                 style={{ width: '100%' }}
               >
-                Save Officer Assignment
+                {isAssigning ? 'Saving Assignment...' : 'Save Officer Assignment'}
               </Button>
             </form>
           </Card>

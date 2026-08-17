@@ -4,7 +4,6 @@ import {
   login,
   demoLogin,
   getMe,
-  resendVerification,
   logout,
 } from '../controllers/authController.js';
 import {
@@ -16,7 +15,7 @@ import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 
-// POST /api/campuscare/auth/register - Register new student account
+// POST /api/campuscare/auth/register - Register new student account (immediate access)
 router.post('/auth/register', validateRegister, register);
 
 // POST /api/campuscare/auth/login - Authenticate with email & password
@@ -25,10 +24,7 @@ router.post('/auth/login', validateLogin, login);
 // POST /api/campuscare/auth/demo-login - Instant 1-click demo login
 router.post('/auth/demo-login', validateDemoLogin, demoLogin);
 
-// POST /api/campuscare/auth/resend-verification - Resend email verification link
-router.post('/auth/resend-verification', resendVerification);
-
-// GET /api/campuscare/auth/me - Retrieve current verified profile
+// GET /api/campuscare/auth/me - Retrieve current authenticated profile
 router.get('/auth/me', requireAuth, getMe);
 
 // POST /api/campuscare/auth/logout - Sign out session

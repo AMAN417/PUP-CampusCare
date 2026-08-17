@@ -6,8 +6,6 @@ import {
   Bell,
   User,
   LogOut,
-  Shield,
-  GraduationCap,
   Menu,
   PlusCircle,
   ArrowRight,
@@ -21,7 +19,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, onOpenMobileMenu }) => {
-  const { user, role, isAuthenticated, loginAsDemo, logout } = useAuth();
+  const { user, role, isAuthenticated, logout } = useAuth();
   const { notifications, unreadNotificationCount, markNotificationRead, markAllNotificationsRead } =
     useComplaints();
 
@@ -57,7 +55,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, onOpenM
       <header className="navbar">
         <div className="navbar-inner">
           {/* Brand Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             {isAuthenticated && onOpenMobileMenu && (
               <button
                 type="button"
@@ -83,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, onOpenM
             </div>
           </div>
 
-          {/* Center Links (Public vs Authenticated) */}
+          {/* Center Links (Public Only) */}
           <nav className="nav-links" style={{ display: isAuthenticated ? 'none' : 'flex' }}>
             <button
               type="button"
@@ -123,67 +121,6 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, onOpenM
 
           {/* Right Controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {/* Quick Demo Switcher Pill */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                background: 'var(--pup-navy-subtle)',
-                borderRadius: 'var(--radius-full)',
-                padding: '3px',
-                border: '1px solid var(--border-light)',
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  loginAsDemo('student');
-                  onNavigate('/student/dashboard');
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-full)',
-                  border: 'none',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  background: role === 'student' && isAuthenticated ? 'var(--pup-maroon)' : 'transparent',
-                  color: role === 'student' && isAuthenticated ? '#FFFFFF' : 'var(--text-secondary)',
-                  transition: 'all var(--transition-fast)',
-                }}
-              >
-                <GraduationCap size={13} />
-                <span>Student</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  loginAsDemo('admin');
-                  onNavigate('/admin/dashboard');
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-full)',
-                  border: 'none',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  background: role === 'admin' && isAuthenticated ? 'var(--pup-navy)' : 'transparent',
-                  color: role === 'admin' && isAuthenticated ? '#FFFFFF' : 'var(--text-secondary)',
-                  transition: 'all var(--transition-fast)',
-                }}
-              >
-                <Shield size={13} />
-                <span>Admin</span>
-              </button>
-            </div>
-
             {isAuthenticated ? (
               <>
                 {/* Submit Issue Quick Button (for Students) */}

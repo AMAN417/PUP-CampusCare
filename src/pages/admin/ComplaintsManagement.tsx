@@ -5,6 +5,7 @@ import { SearchBar } from '../../components/common/SearchBar';
 import { FilterBar } from '../../components/common/FilterBar';
 import type { FilterState } from '../../components/common/FilterBar';
 import { Button } from '../../components/common/Button';
+import { LoadingSkeleton } from '../../components/common/LoadingSkeleton';
 import { Download } from 'lucide-react';
 import type { ComplaintStatus } from '../../types';
 
@@ -17,7 +18,7 @@ export const ComplaintsManagement: React.FC<ComplaintsManagementProps> = ({
   onNavigate,
   initialStatus = 'ALL',
 }) => {
-  const { complaints, exportCSV, updateStatus } = useComplaints();
+  const { complaints, exportCSV, updateStatus, loading } = useComplaints();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<FilterState>({
@@ -108,12 +109,16 @@ export const ComplaintsManagement: React.FC<ComplaintsManagementProps> = ({
       </div>
 
       {/* Main Table */}
-      <ComplaintTable
-        complaints={filteredComplaints}
-        onOpenComplaint={(id) => onNavigate(`/admin/complaints/${id}`)}
-        onQuickStatusChange={(id, newStatus) => updateStatus(id, newStatus, 'Status updated via table')}
-        onExportCSV={() => exportCSV(filteredComplaints)}
-      />
+      {loading && complaints.length === 0 ? (
+        <LoadingSkeleton type="card" count={3} />
+      ) : (
+        <ComplaintTable
+          complaints={filteredComplaints}
+          onOpenComplaint={(id) => onNavigate(`/admin/complaints/${id}`)}
+          onQuickStatusChange={(id, newStatus) => updateStatus(id, newStatus, 'Status updated via table')}
+          onExportCSV={() => exportCSV(filteredComplaints)}
+        />
+      )}
     </div>
   );
 };

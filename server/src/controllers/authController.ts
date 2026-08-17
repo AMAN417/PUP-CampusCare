@@ -89,31 +89,6 @@ export const getMe = async (
   }
 };
 
-export const resendVerification = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const { email } = req.body;
-    if (!email || typeof email !== 'string') {
-      throw new AppError('Valid email address is required.', 400);
-    }
-
-    await authService.resendVerificationEmail(email);
-
-    const response: ApiResponse<{ message: string }> = {
-      success: true,
-      message: `Verification link resent to ${email}. Please check your inbox.`,
-      timestamp: new Date().toISOString(),
-    };
-
-    res.status(200).json(response);
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const logout = async (
   _req: Request,
   res: Response,

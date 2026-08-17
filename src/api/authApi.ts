@@ -6,7 +6,7 @@ export interface AuthResult {
   token?: string;
   refreshToken?: string;
   expiresIn?: number;
-  requiresVerification?: boolean;
+  requiresVerification?: false;
 }
 
 export interface RegisterPayload {
@@ -26,7 +26,7 @@ export interface LoginPayload {
 
 export const authApi = {
   /**
-   * Register a new student account
+   * Register a new student account — session is issued immediately on success.
    */
   register: async (payload: RegisterPayload): Promise<AuthResult> => {
     const data = await apiClient.post<AuthResult>('/auth/register', {
@@ -40,7 +40,7 @@ export const authApi = {
       role: 'student',
     });
 
-    if (data?.token && !data?.requiresVerification) {
+    if (data?.token) {
       setAuthToken(data.token);
     }
     return data;
@@ -55,17 +55,10 @@ export const authApi = {
       password: payload.password || 'password123',
     });
 
-    if (data?.token && !data?.requiresVerification) {
+    if (data?.token) {
       setAuthToken(data.token);
     }
     return data;
-  },
-
-  /**
-   * Resend verification email
-   */
-  resendVerification: async (email: string): Promise<void> => {
-    await apiClient.post('/auth/resend-verification', { email });
   },
 
   /**
@@ -81,7 +74,7 @@ export const authApi = {
   },
 
   /**
-   * Retrieve current verified profile from server
+   * Retrieve current authenticated profile from server
    */
   getMe: async (): Promise<User> => {
     const data = await apiClient.get<{ user: User }>('/auth/me');

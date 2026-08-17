@@ -11,15 +11,13 @@ interface LoginPageProps {
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
-  const { login, loginAsDemo, resendVerificationEmail } = useAuth();
+  const { login, loginAsDemo } = useAuth();
   const { success } = useToast();
 
   const [email, setEmail] = useState('harman.student@demo.pup.ac.in');
   const [password, setPassword] = useState('password123');
   const [role, setRole] = useState<'student' | 'admin'>('student');
   const [error, setError] = useState('');
-  const [isUnverified, setIsUnverified] = useState(false);
-  const [resending, setResending] = useState(false);
 
   const handleRegularLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,34 +28,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
 
     try {
       setError('');
-      setIsUnverified(false);
-      const ok = await login(email, password);
-      if (ok) {
+      const loggedUser = await login(email, password);
+      if (loggedUser) {
         success('Logged In Successfully', `Welcome back to PUP CampusCare`);
-        onNavigate(role === 'admin' ? '/admin/dashboard' : '/student/dashboard');
+        onNavigate(loggedUser.role === 'admin' ? '/admin/dashboard' : '/student/dashboard');
       } else {
         setError('Invalid credentials. Please check your email and password.');
       }
     } catch (err: any) {
       const msg = err?.message || 'Login failed. Please check your credentials.';
       setError(msg);
-      if (msg.toLowerCase().includes('verify')) {
-        setIsUnverified(true);
-      }
-    }
-  };
-
-  const handleResendClick = async () => {
-    if (!email) return;
-    try {
-      setResending(true);
-      await resendVerificationEmail(email);
-      success('Verification Link Sent', `Sent a new verification link to ${email}.`);
-      onNavigate(`/verify-email?email=${encodeURIComponent(email)}`);
-    } catch (err: any) {
-      setError(err?.message || 'Failed to resend verification email.');
-    } finally {
-      setResending(false);
     }
   };
 
@@ -213,26 +193,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
                 fontSize: '0.8125rem',
                 marginBottom: '1rem',
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem',
+                alignItems: 'center',
+                gap: '0.4rem',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <AlertCircle size={16} style={{ flexShrink: 0 }} />
-                <span>{error}</span>
-              </div>
-              {isUnverified && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleResendClick}
-                  isLoading={resending}
-                  style={{ alignSelf: 'flex-start', marginTop: '0.25rem', fontSize: '0.75rem' }}
-                >
-                  Resend Verification Email
-                </Button>
-              )}
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
+              <span>{error}</span>
             </div>
           )}
 

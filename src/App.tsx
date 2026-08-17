@@ -10,7 +10,6 @@ import { Footer } from './components/layout/Footer';
 import { LandingPage } from './pages/public/LandingPage';
 import { LoginPage } from './pages/public/LoginPage';
 import { RegisterPage } from './pages/public/RegisterPage';
-import { VerifyEmailPage } from './pages/public/VerifyEmailPage';
 
 // Student Pages
 import { StudentDashboard } from './pages/student/StudentDashboard';
@@ -27,6 +26,7 @@ import { AdminComplaintDetails } from './pages/admin/AdminComplaintDetails';
 import { AnalyticsPage } from './pages/admin/AnalyticsPage';
 import { UserManagement } from './pages/admin/UserManagement';
 
+import { ShieldAlert } from 'lucide-react';
 import type { ComplaintCategory, ComplaintStatus } from './types';
 
 const MainApp: React.FC = () => {
@@ -123,19 +123,6 @@ const MainApp: React.FC = () => {
       );
     }
 
-    if (pathPart === '/verify-email') {
-      const email = queryParams.get('email') || undefined;
-      return (
-        <div className="app-container">
-          <Navbar currentPath={currentPath} onNavigate={navigate} />
-          <main className="page-wrapper">
-            <VerifyEmailPage email={email} onNavigate={navigate} />
-          </main>
-          <Footer onNavigate={navigate} />
-        </div>
-      );
-    }
-
     // Protected Student Routes (Require authenticated session)
     if (pathPart.startsWith('/student')) {
       if (!isAuthenticated || !user) {
@@ -204,7 +191,7 @@ const MainApp: React.FC = () => {
 
     // Protected Admin Routes (Require authenticated admin session)
     if (pathPart.startsWith('/admin')) {
-      if (!isAuthenticated || !user || user.role !== 'admin') {
+      if (!isAuthenticated || !user) {
         return (
           <div className="app-container">
             <Navbar currentPath={currentPath} onNavigate={navigate} />
@@ -213,6 +200,54 @@ const MainApp: React.FC = () => {
             </main>
             <Footer onNavigate={navigate} />
           </div>
+        );
+      }
+
+      if (user.role !== 'admin') {
+        return (
+          <DashboardLayout currentPath="/student/dashboard" onNavigate={navigate}>
+            <div style={{ maxWidth: '540px', margin: '3rem auto', textAlign: 'center' }}>
+              <div
+                style={{
+                  background: 'var(--bg-surface)',
+                  padding: '2.5rem 2rem',
+                  borderRadius: 'var(--radius-xl)',
+                  border: '1px solid var(--border-light)',
+                  boxShadow: 'var(--shadow-lg)',
+                }}
+              >
+                <div
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '50%',
+                    background: '#FEF2F2',
+                    color: '#DC2626',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 1.25rem auto',
+                  }}
+                >
+                  <ShieldAlert size={32} />
+                </div>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+                  Access Restricted
+                </h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '1.5rem' }}>
+                  Administrator privileges are required to view this area. You do not have permission to access administrative consoles.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/student/dashboard')}
+                  className="btn btn-primary"
+                  style={{ width: '100%' }}
+                >
+                  Return to Student Dashboard
+                </button>
+              </div>
+            </div>
+          </DashboardLayout>
         );
       }
 
