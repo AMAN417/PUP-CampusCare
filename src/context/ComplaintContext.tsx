@@ -474,18 +474,28 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const markNotificationRead = (id: string) => {
-    // In memory & storage
+    // Optimistic UI update first
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
-    if (!isApiMode) {
+    if (isApiMode) {
+      // Fire-and-forget: persist read state server-side
+      notificationsApi.markAsRead(id).catch((err) => {
+        console.warn(`Failed to mark notification ${id} as read via API:`, err);
+      });
+    } else {
       storage.markNotificationAsRead(id);
     }
   };
 
   const markAllNotificationsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    if (!isApiMode) {
+    if (isApiMode) {
+      // Fire-and-forget: persist read-all state server-side
+      notificationsApi.markAllAsRead().catch((err) => {
+        console.warn('Failed to mark all notifications as read via API:', err);
+      });
+    } else {
       storage.markAllNotificationsAsRead(user?.id);
     }
     success('Notifications Marked as Read');

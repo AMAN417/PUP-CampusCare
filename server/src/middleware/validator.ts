@@ -142,18 +142,23 @@ export const validatePatchComplaint = (
   _res: Response,
   next: NextFunction
 ): void => {
-  const { assignedDepartment, assignedTo, priority, isEscalated } = req.body;
+  const { assignedDepartment, assignedTo, priority, isEscalated, title, description, category, location } = req.body;
   const errors: string[] = [];
 
+  // Include all patchable fields — both student-editable and admin-only
   const hasAnyField =
     assignedDepartment !== undefined ||
     assignedTo !== undefined ||
     priority !== undefined ||
-    isEscalated !== undefined;
+    isEscalated !== undefined ||
+    title !== undefined ||
+    description !== undefined ||
+    category !== undefined ||
+    location !== undefined;
 
   if (!hasAnyField) {
     errors.push(
-      'At least one field to update must be provided (assignedDepartment, assignedTo, priority, isEscalated).'
+      'At least one field to update must be provided (title, description, category, location, priority, assignedDepartment, assignedTo, isEscalated).'
     );
   }
 

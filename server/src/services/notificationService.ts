@@ -23,6 +23,18 @@ export class NotificationService {
     const repo = getNotificationRepository();
     return repo.markAsRead(id);
   }
+
+  public async markAllAsRead(userId: string): Promise<boolean> {
+    const repo = getNotificationRepository();
+    const notifications = await repo.getAll(userId);
+    const unread = notifications.filter((n) => !n.read);
+    let allOk = true;
+    for (const n of unread) {
+      const ok = await repo.markAsRead(n.id);
+      if (!ok) allOk = false;
+    }
+    return allOk;
+  }
 }
 
 export const notificationService = new NotificationService();
