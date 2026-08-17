@@ -10,6 +10,8 @@ import { Footer } from './components/layout/Footer';
 import { LandingPage } from './pages/public/LandingPage';
 import { LoginPage } from './pages/public/LoginPage';
 import { RegisterPage } from './pages/public/RegisterPage';
+import { ForgotPasswordPage } from './pages/public/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/public/ResetPasswordPage';
 
 // Student Pages
 import { StudentDashboard } from './pages/student/StudentDashboard';
@@ -117,6 +119,30 @@ const MainApp: React.FC = () => {
           <Navbar currentPath={currentPath} onNavigate={navigate} />
           <main className="page-wrapper">
             <RegisterPage onNavigate={navigate} />
+          </main>
+          <Footer onNavigate={navigate} />
+        </div>
+      );
+    }
+
+    if (pathPart === '/forgot-password') {
+      return (
+        <div className="app-container">
+          <Navbar currentPath={currentPath} onNavigate={navigate} />
+          <main className="page-wrapper">
+            <ForgotPasswordPage onNavigate={navigate} />
+          </main>
+          <Footer onNavigate={navigate} />
+        </div>
+      );
+    }
+
+    if (pathPart === '/reset-password' || pathPart.startsWith('/reset-password')) {
+      return (
+        <div className="app-container">
+          <Navbar currentPath={currentPath} onNavigate={navigate} />
+          <main className="page-wrapper">
+            <ResetPasswordPage onNavigate={navigate} />
           </main>
           <Footer onNavigate={navigate} />
         </div>

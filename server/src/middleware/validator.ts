@@ -260,3 +260,46 @@ export const validateDemoLogin = (
   next();
 };
 
+export const validateForgotPassword = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): void => {
+  const { email } = req.body;
+  const errors: string[] = [];
+
+  if (
+    !email ||
+    typeof email !== 'string' ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+  ) {
+    errors.push('A valid "email" address is required.');
+  }
+
+  if (errors.length > 0) {
+    return next(new AppError('Validation failed for password recovery request.', 400, errors));
+  }
+
+  next();
+};
+
+export const validateResetPassword = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): void => {
+  const { password } = req.body;
+  const errors: string[] = [];
+
+  if (!password || typeof password !== 'string' || password.length < 6) {
+    errors.push('Field "password" is required and must be at least 6 characters.');
+  }
+
+  if (errors.length > 0) {
+    return next(new AppError('Validation failed for password reset.', 400, errors));
+  }
+
+  next();
+};
+
+

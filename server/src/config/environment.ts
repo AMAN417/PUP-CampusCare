@@ -13,12 +13,26 @@ export interface EnvironmentConfig {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
+  FRONTEND_URL: string;
+  RESET_PASSWORD_REDIRECT_URL: string;
 }
 
 const nodeEnv = (process.env.NODE_ENV || 'development').toLowerCase() as
   | 'development'
   | 'production'
   | 'test';
+
+const defaultFrontendUrl =
+  nodeEnv === 'production'
+    ? 'https://pup-campus-care.vercel.app'
+    : 'http://localhost:5173';
+
+const frontendUrl = (process.env.FRONTEND_URL || defaultFrontendUrl).trim().replace(/\/$/, '');
+
+const resetPasswordRedirectUrl = (
+  process.env.RESET_PASSWORD_REDIRECT_URL ||
+  `${frontendUrl}/#/reset-password`
+).trim();
 
 const parseCorsOrigin = (rawOrigin?: string): any => {
   if (nodeEnv === 'development' || nodeEnv === 'test') {
@@ -69,6 +83,8 @@ export const config: EnvironmentConfig = {
   SUPABASE_URL: process.env.SUPABASE_URL?.trim() || '',
   SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY?.trim() || '',
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || '',
+  FRONTEND_URL: frontendUrl,
+  RESET_PASSWORD_REDIRECT_URL: resetPasswordRedirectUrl,
 };
 
 export const getDataProvider = (): DataProviderType => {

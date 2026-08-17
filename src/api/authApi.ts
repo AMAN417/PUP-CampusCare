@@ -6,7 +6,6 @@ export interface AuthResult {
   token?: string;
   refreshToken?: string;
   expiresIn?: number;
-  requiresVerification?: false;
 }
 
 export interface RegisterPayload {
@@ -62,6 +61,32 @@ export const authApi = {
   },
 
   /**
+   * Request password recovery link for email address
+   */
+  forgotPassword: async (email: string): Promise<{ sent: boolean }> => {
+    const data = await apiClient.post<{ sent: boolean }>('/auth/forgot-password', { email });
+    return data;
+  },
+
+  /**
+   * Reset password with new password and verified recovery token/session
+   */
+  resetPassword: async (password: string, token?: string): Promise<{ updated: boolean }> => {
+    const data = await apiClient.post<{ updated: boolean }>(
+      '/auth/reset-password',
+      { password, token },
+      token
+        ? {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        : undefined
+    );
+    return data;
+  },
+
+  /**
    * Instant 1-click Demo Login
    */
   demoLogin: async (role: UserRole): Promise<AuthResult> => {
@@ -94,3 +119,4 @@ export const authApi = {
     }
   },
 };
+

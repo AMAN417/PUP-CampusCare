@@ -113,7 +113,24 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Password</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+              <label className="form-label" style={{ marginBottom: 0 }}>Password</label>
+              <button
+                type="button"
+                onClick={() => onNavigate('/forgot-password')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--pup-maroon)',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              >
+                Forgot password?
+              </button>
+            </div>
             <div style={{ position: 'relative' }}>
               <Lock
                 size={16}
@@ -144,7 +161,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
             size="lg"
             isLoading={isSubmitting}
             disabled={isSubmitting}
-            style={{ width: '100%', marginTop: '0.5rem' }}
+            style={{ width: '100%', marginTop: '0.75rem' }}
             rightIcon={!isSubmitting ? <ArrowRight size={16} /> : undefined}
           >
             {isSubmitting ? 'Signing In...' : 'Sign In'}

@@ -11,7 +11,8 @@
     "server:dev": "npm --prefix server run dev",
     "server:build": "npm --prefix server run build",
     "server:start": "npm --prefix server run start",
-    "server:test": "npm --prefix server run test:api"
+    "server:test": "npm --prefix server run test:api",
+    "server:create-admin": "npm --prefix server run create-admin"
   },
   "dependencies": {
     "framer-motion": "^13.1.0",

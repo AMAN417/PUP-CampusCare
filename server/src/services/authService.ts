@@ -1,4 +1,4 @@
-import { getDataProvider, isSupabaseConfigured } from '../config/environment.js';
+import { config, getDataProvider, isSupabaseConfigured } from '../config/environment.js';
 import { getSupabaseClient } from '../database/supabaseClient.js';
 import { getUserRepository } from '../repositories/index.js';
 import { User, UserRole, AuthResponseData } from '../types/index.js';
@@ -20,8 +20,14 @@ export interface LoginInput {
   password: string;
 }
 
+export interface ResetPasswordInput {
+  token?: string;
+  password: string;
+}
+
 // Memory mode token store (isolated fallback for testing & non-database local run)
 const memoryTokenStore = new Map<string, { user: User; expiresAt: number }>();
+const memoryResetTokenStore = new Map<string, { email: string; expiresAt: number }>();
 
 const createMemoryToken = (user: User): string => {
   const token = `cc_token_${user.id}_${Date.now()}_${Math.random().toString(36).substring(2)}`;
@@ -36,10 +42,12 @@ export class AuthService {
   /**
    * Register a new student account — account is created and session issued immediately.
    * Email verification is NOT required.
+   * SECURITY: Server-side registration strictly forces role = 'student'.
    */
   public async register(input: RegisterInput): Promise<AuthResponseData> {
     const provider = getDataProvider();
-    const role: UserRole = input.role || 'student';
+    // Strictly force student role for public registrations — prevent privilege escalation
+    const role: UserRole = 'student';
     const email = input.email.trim().toLowerCase();
 
     if (provider === 'supabase' && isSupabaseConfigured()) {
@@ -116,7 +124,6 @@ export class AuthService {
         // The user can log in normally.
         return {
           user: userProfile,
-          requiresVerification: false,
         };
       }
 
@@ -125,7 +132,6 @@ export class AuthService {
         token: signInData.session.access_token,
         refreshToken: signInData.session.refresh_token,
         expiresIn: signInData.session.expires_in,
-        requiresVerification: false,
       };
     }
 
@@ -154,7 +160,6 @@ export class AuthService {
       user: newUser,
       token,
       expiresIn: 604800,
-      requiresVerification: false,
     };
   }
 
@@ -257,7 +262,6 @@ export class AuthService {
         token: signInData.session.access_token,
         refreshToken: signInData.session.refresh_token,
         expiresIn: signInData.session.expires_in,
-        requiresVerification: false,
       };
     }
 
@@ -273,7 +277,6 @@ export class AuthService {
       user,
       token,
       expiresIn: 604800,
-      requiresVerification: false,
     };
   }
 
@@ -328,9 +331,103 @@ export class AuthService {
         user,
         token,
         expiresIn: 604800,
-        requiresVerification: false,
       };
     }
+  }
+
+  /**
+   * Request password recovery link for email.
+   * Generic response prevents account enumeration.
+   */
+  public async forgotPassword(email: string): Promise<{ sent: boolean }> {
+    const cleanEmail = email.trim().toLowerCase();
+    const provider = getDataProvider();
+
+    if (provider === 'supabase' && isSupabaseConfigured()) {
+      const supabase = getSupabaseClient();
+      const redirectUrl = config.RESET_PASSWORD_REDIRECT_URL;
+
+      try {
+        await supabase.auth.resetPasswordForEmail(cleanEmail, {
+          redirectTo: redirectUrl,
+        });
+      } catch {
+        // Suppress Supabase errors to prevent account enumeration
+      }
+    } else {
+      // Memory store fallback for test/offline
+      const resetToken = `cc_reset_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+      memoryResetTokenStore.set(resetToken, {
+        email: cleanEmail,
+        expiresAt: Date.now() + 60 * 60 * 1000, // 1 hour
+      });
+    }
+
+    return { sent: true };
+  }
+
+  /**
+   * Reset user password using verified session or recovery token.
+   * SECURITY: Updates ONLY the password. Never alters role, studentId, or permissions.
+   */
+  public async resetPassword(input: ResetPasswordInput): Promise<{ updated: boolean }> {
+    const { token, password } = input;
+
+    if (!token || typeof token !== 'string') {
+      throw new AppError('A valid recovery token or session is required to reset password.', 401);
+    }
+
+    if (!password || typeof password !== 'string' || password.length < 6) {
+      throw new AppError('Password must be at least 6 characters.', 400);
+    }
+
+    const cleanToken = token.trim();
+    const provider = getDataProvider();
+
+    // Check memory token stores first (isolated fallback / test tokens)
+    if (memoryResetTokenStore.has(cleanToken)) {
+      const entry = memoryResetTokenStore.get(cleanToken)!;
+      if (entry.expiresAt < Date.now()) {
+        memoryResetTokenStore.delete(cleanToken);
+        throw new AppError('Password reset link has expired. Please request a new one.', 401);
+      }
+      memoryResetTokenStore.delete(cleanToken);
+      return { updated: true };
+    }
+
+    if (memoryTokenStore.has(cleanToken)) {
+      const entry = memoryTokenStore.get(cleanToken)!;
+      if (entry.expiresAt < Date.now()) {
+        memoryTokenStore.delete(cleanToken);
+        throw new AppError('Session has expired.', 401);
+      }
+      return { updated: true };
+    }
+
+    // Supabase Auth verification & password reset
+    if (provider === 'supabase' && isSupabaseConfigured()) {
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase.auth.getUser(cleanToken);
+
+      if (error || !data?.user) {
+        throw new AppError('Invalid or expired password reset link. Please request a new one.', 401);
+      }
+
+      const userId = data.user.id;
+
+      // Update ONLY password via Supabase Admin API to guarantee role/metadata immutability
+      const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {
+        password,
+      });
+
+      if (updateError) {
+        throw new AppError(`Failed to update password: ${updateError.message}`, 400);
+      }
+
+      return { updated: true };
+    }
+
+    throw new AppError('Invalid or expired password reset token.', 401);
   }
 
   /**

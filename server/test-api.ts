@@ -621,6 +621,193 @@ const runTests = async () => {
         details: `Auth guard returned HTTP ${unauthRes.status}`,
       });
     }
+
+    // 21. Registration Role Hardening: Malicious client attempts role="admin" injection
+    {
+      const maliciousEmail = `attacker.${Date.now()}@demo.pup.ac.in`;
+      const res = await fetch(`${BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Malicious Injected User',
+          email: maliciousEmail,
+          password: 'password123',
+          role: 'admin', // Malicious attempt to escalate privileges
+        }),
+      });
+      const body = (await res.json()) as any;
+      const createdUser = body.data?.user;
+      const passed =
+        res.status === 201 &&
+        body.success === true &&
+        createdUser?.role === 'student'; // MUST be forced to student
+
+      results.push({
+        name: 'POST /api/campuscare/auth/register (Role injection protection: role="admin" forced to "student")',
+        passed,
+        status: res.status,
+        details: `Requested role: "admin" -> Server assigned role: "${createdUser?.role}"`,
+      });
+    }
+
+    // 22. Forgot Password: Valid email (Generic success response, no account enumeration)
+    {
+      const res = await fetch(`${BASE_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: studentEmail }),
+      });
+      const body = (await res.json()) as any;
+      const passed =
+        res.status === 200 &&
+        body.success === true &&
+        body.data?.sent === true;
+
+      results.push({
+        name: 'POST /api/campuscare/auth/forgot-password (Valid email triggers generic recovery response)',
+        passed,
+        status: res.status,
+        details: `Response: "${body.message}"`,
+      });
+    }
+
+    // 23. Forgot Password: Non-existent email (Generic success response, prevents account enumeration)
+    {
+      const res = await fetch(`${BASE_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'nonexistent.user.999@pup.ac.in' }),
+      });
+      const body = (await res.json()) as any;
+      const passed =
+        res.status === 200 &&
+        body.success === true &&
+        body.data?.sent === true;
+
+      results.push({
+        name: 'POST /api/campuscare/auth/forgot-password (Non-existent email returns generic success to prevent enumeration)',
+        passed,
+        status: res.status,
+        details: `Generic response preserved: "${body.message}"`,
+      });
+    }
+
+    // 24. Negative Test: Forgot Password invalid email format (Expected 400)
+    {
+      const res = await fetch(`${BASE_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'not-an-email' }),
+      });
+      const body = (await res.json()) as any;
+      const passed = res.status === 400 && body.success === false;
+
+      results.push({
+        name: 'Negative Test: POST /auth/forgot-password with invalid email format (Expected 400 Bad Request)',
+        passed,
+        status: res.status,
+        details: `Correctly rejected invalid email: "${body.errors?.[0] || body.error}"`,
+      });
+    }
+
+    // 25. Negative Test: Reset Password without token (Expected 401)
+    {
+      const res = await fetch(`${BASE_URL}/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: 'newpassword123' }),
+      });
+      const body = (await res.json()) as any;
+      const passed = res.status === 401 && body.success === false;
+
+      results.push({
+        name: 'Negative Test: POST /auth/reset-password without recovery token (Expected 401 Unauthorized)',
+        passed,
+        status: res.status,
+        details: `Rejected unauthenticated reset: "${body.error}"`,
+      });
+    }
+
+    // 26. Negative Test: Reset Password with password too short (Expected 400)
+    {
+      const res = await fetch(`${BASE_URL}/auth/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${studentToken}`,
+        },
+        body: JSON.stringify({ password: '123' }),
+      });
+      const body = (await res.json()) as any;
+      const passed = res.status === 400 && body.success === false;
+
+      results.push({
+        name: 'Negative Test: POST /auth/reset-password with short password (Expected 400 Bad Request)',
+        passed,
+        status: res.status,
+        details: `Validation caught: "${body.errors?.[0] || body.error}"`,
+      });
+    }
+
+    // 27. Reset Password flow with valid session token (Expected 200 OK)
+    {
+      const res = await fetch(`${BASE_URL}/auth/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${studentToken}`,
+        },
+        body: JSON.stringify({ password: 'newSecurePassword456' }),
+      });
+      const body = (await res.json()) as any;
+      const passed =
+        res.status === 200 &&
+        body.success === true &&
+        body.data?.updated === true;
+
+      results.push({
+        name: 'POST /api/campuscare/auth/reset-password (Secure password update with valid session token)',
+        passed,
+        status: res.status,
+        details: `Message: "${body.message}"`,
+      });
+    }
+
+    // 28. Role Immutability Check: Re-login with new password and verify role is UNCHANGED
+    {
+      const reLoginRes = await fetch(`${BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: studentUser?.email,
+          password: 'newSecurePassword456',
+        }),
+      });
+      const reLoginBody = (await reLoginRes.json()) as any;
+      const newStudentToken = reLoginBody.data?.token;
+
+      // Verify with GET /auth/me
+      const meRes = await fetch(`${BASE_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${newStudentToken}` },
+      });
+      const meBody = (await meRes.json()) as any;
+      const currentUser = meBody.data?.user;
+
+      const passed =
+        reLoginRes.status === 200 &&
+        reLoginBody.success === true &&
+        meRes.status === 200 &&
+        currentUser?.role === 'student'; // Role MUST remain student
+
+      results.push({
+        name: 'Role Immutability Verification (Login with new password & role strictly unchanged)',
+        passed,
+        status: meRes.status,
+        details: `Re-login success: ${Boolean(newStudentToken)} | User: ${currentUser?.name} | Role: "${currentUser?.role}" (unchanged)`,
+      });
+    }
+
+
   } finally {
     await new Promise<void>((resolve, reject) => {
       server.close((err) => (err ? reject(err) : resolve()));

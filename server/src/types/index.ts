@@ -116,7 +116,6 @@ export interface AuthResponseData {
   token?: string;
   refreshToken?: string;
   expiresIn?: number;
-  requiresVerification?: boolean;
 }
 
 export interface ApiResponse<T = unknown> {

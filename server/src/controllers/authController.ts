@@ -106,3 +106,56 @@ export const logout = async (
     next(error);
   }
 };
+
+export const forgotPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { email } = req.body;
+    await authService.forgotPassword(email);
+
+    // Return generic success message regardless of whether the email exists
+    const response: ApiResponse<{ sent: boolean }> = {
+      success: true,
+      message: 'If an account exists with this email, a password reset link has been sent.',
+      data: { sent: true },
+      timestamp: new Date().toISOString(),
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    // Extract token from Authorization header or body token field
+    let token = req.body.token;
+    const authHeader = req.headers.authorization;
+    if (!token && authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7).trim();
+    }
+
+    const { password } = req.body;
+    await authService.resetPassword({ token, password });
+
+    const response: ApiResponse<{ updated: boolean }> = {
+      success: true,
+      message: 'Password updated successfully. You can now log in with your new password.',
+      data: { updated: true },
+      timestamp: new Date().toISOString(),
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
