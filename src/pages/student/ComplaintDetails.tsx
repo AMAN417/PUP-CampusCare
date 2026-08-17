@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useComplaints } from '../../context/ComplaintContext';
+import { useAuth } from '../../context/AuthContext';
 import { StatusBadge, PriorityBadge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
@@ -17,9 +18,11 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { CATEGORY_METADATA } from '../../data/mockData';
-import type { Complaint } from '../../types';
+import type { Complaint, ComplaintCategory, Priority } from '../../types';
 
 interface ComplaintDetailsProps {
   complaintId: string;
@@ -30,7 +33,8 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
   complaintId,
   onNavigate,
 }) => {
-  const { getComplaintById, fetchComplaintById, addComment, updateStatus } = useComplaints();
+  const { getComplaintById, fetchComplaintById, addComment, updateStatus, editComplaint, deleteComplaint } = useComplaints();
+  const { user } = useAuth();
 
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [timelineMode, setTimelineMode] = useState<'horizontal' | 'vertical'>('horizontal');
@@ -39,6 +43,21 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
   );
   const [isLoading, setIsLoading] = useState<boolean>(!complaint);
   const [isClosing, setIsClosing] = useState<boolean>(false);
+
+  // Edit modal state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    category: '' as ComplaintCategory,
+    priority: '' as Priority,
+    location: '',
+  });
+
+  // Delete confirmation state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -122,6 +141,59 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
     return success;
   };
 
+  // Determine if current user owns this complaint
+  const isOwner =
+    !!user &&
+    user.role === 'student' &&
+    (complaint.studentId === user.id ||
+      (complaint.studentId === 'user-student-1' && user.id === 'user-student-1'));
+
+  // Editable statuses: not Closed
+  const canEdit = isOwner && complaint.status !== 'Closed';
+
+  const handleOpenEdit = () => {
+    setEditForm({
+      title: complaint.title,
+      description: complaint.description,
+      category: complaint.category,
+      priority: complaint.priority,
+      location: complaint.location,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editForm.title.trim() || !editForm.description.trim() || !editForm.location.trim()) return;
+    setIsSaving(true);
+    try {
+      const updated = await editComplaint(complaint.id, {
+        title: editForm.title.trim(),
+        description: editForm.description.trim(),
+        category: editForm.category,
+        priority: editForm.priority,
+        location: editForm.location.trim(),
+      });
+      if (updated) {
+        setComplaint(updated);
+        setShowEditModal(false);
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      const ok = await deleteComplaint(complaint.id);
+      if (ok) {
+        onNavigate('/student/complaints');
+      }
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       {/* Top Breadcrumb & Actions */}
@@ -166,6 +238,28 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
             >
               Confirm & Close Complaint
             </Button>
+          )}
+
+          {/* Edit & Delete — only for complaint owner, non-closed */}
+          {canEdit && (
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleOpenEdit}
+                leftIcon={<Pencil size={14} />}
+              >
+                Edit
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => setShowDeleteModal(true)}
+                leftIcon={<Trash2 size={14} />}
+              >
+                Delete
+              </Button>
+            </>
           )}
 
           <div
@@ -451,6 +545,195 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
             />
           </div>
         )}
+      </Modal>
+
+      {/* Edit Complaint Modal */}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => !isSaving && setShowEditModal(false)}
+        title={
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Pencil size={18} style={{ color: 'var(--pup-maroon)' }} />
+            Edit Complaint
+          </span>
+        }
+        maxWidth="600px"
+        footer={
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+            <Button
+              variant="secondary"
+              onClick={() => setShowEditModal(false)}
+              disabled={isSaving}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleSaveEdit}
+              isLoading={isSaving}
+              disabled={
+                isSaving ||
+                !editForm.title.trim() ||
+                !editForm.description.trim() ||
+                !editForm.location.trim()
+              }
+            >
+              Save Changes
+            </Button>
+          </div>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {/* Title */}
+          <div className="form-group">
+            <label className="form-label">Title</label>
+            <input
+              type="text"
+              className="form-input"
+              value={editForm.title}
+              onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
+              placeholder="Brief description of the issue"
+              maxLength={120}
+              disabled={isSaving}
+            />
+          </div>
+
+          {/* Category & Priority — 2 columns */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div className="form-group">
+              <label className="form-label">Category</label>
+              <select
+                className="form-input"
+                value={editForm.category}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, category: e.target.value as ComplaintCategory }))
+                }
+                disabled={isSaving}
+              >
+                {(
+                  [
+                    'Hostel',
+                    'Classroom',
+                    'Electricity',
+                    'Water',
+                    'Sanitation',
+                    'Internet',
+                    'Transportation',
+                    'Infrastructure',
+                    'Security',
+                    'Other',
+                  ] as ComplaintCategory[]
+                ).map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Priority</label>
+              <select
+                className="form-input"
+                value={editForm.priority}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, priority: e.target.value as Priority }))
+                }
+                disabled={isSaving}
+              >
+                {(['Low', 'Medium', 'High', 'Urgent'] as Priority[]).map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Location */}
+          <div className="form-group">
+            <label className="form-label">Location</label>
+            <input
+              type="text"
+              className="form-input"
+              value={editForm.location}
+              onChange={(e) => setEditForm((f) => ({ ...f, location: e.target.value }))}
+              placeholder="e.g. Building A, Room 203"
+              disabled={isSaving}
+            />
+          </div>
+
+          {/* Description */}
+          <div className="form-group">
+            <label className="form-label">Description</label>
+            <textarea
+              className="form-input"
+              rows={5}
+              value={editForm.description}
+              onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+              placeholder="Describe the issue in detail..."
+              disabled={isSaving}
+              style={{ resize: 'vertical', minHeight: '100px' }}
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => !isDeleting && setShowDeleteModal(false)}
+        title={
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#DC2626' }}>
+            <Trash2 size={18} />
+            Delete Complaint
+          </span>
+        }
+        maxWidth="460px"
+        footer={
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+            <Button
+              variant="secondary"
+              onClick={() => setShowDeleteModal(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDeleteConfirm}
+              isLoading={isDeleting}
+              disabled={isDeleting}
+              leftIcon={<Trash2 size={14} />}
+            >
+              Yes, Delete
+            </Button>
+          </div>
+        }
+      >
+        <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
+          <div
+            style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: '#FEF2F2',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1rem auto',
+            }}
+          >
+            <Trash2 size={28} style={{ color: '#DC2626' }} />
+          </div>
+          <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+            Are you sure you want to permanently delete complaint{' '}
+            <strong style={{ color: 'var(--pup-maroon)', fontFamily: 'monospace' }}>
+              {complaint.id}
+            </strong>
+            ? This action <strong>cannot be undone</strong>.
+          </p>
+        </div>
       </Modal>
     </div>
   );

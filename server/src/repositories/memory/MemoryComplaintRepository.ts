@@ -112,21 +112,45 @@ export class MemoryComplaintRepository implements IComplaintRepository {
     const complaint = this.complaints[index];
     const now = new Date().toISOString();
 
+    // Admin-only fields
     if (data.assignedDepartment !== undefined) {
       complaint.assignedDepartment = data.assignedDepartment;
     }
     if (data.assignedTo !== undefined) {
       complaint.assignedTo = data.assignedTo;
     }
-    if (data.priority !== undefined) {
-      complaint.priority = data.priority;
-    }
     if (data.isEscalated !== undefined) {
       complaint.isEscalated = data.isEscalated;
     }
 
+    // Shared fields (student or admin)
+    if (data.priority !== undefined) {
+      complaint.priority = data.priority;
+    }
+    if (data.title !== undefined) {
+      complaint.title = data.title.trim();
+    }
+    if (data.description !== undefined) {
+      complaint.description = data.description.trim();
+    }
+    if (data.category !== undefined) {
+      complaint.category = data.category;
+    }
+    if (data.location !== undefined) {
+      complaint.location = data.location.trim();
+    }
+
     complaint.updatedAt = now;
     return JSON.parse(JSON.stringify(complaint));
+  }
+
+  public async delete(id: string): Promise<boolean> {
+    const index = this.complaints.findIndex(
+      (c) => c.id.toUpperCase() === id.trim().toUpperCase()
+    );
+    if (index === -1) return false;
+    this.complaints.splice(index, 1);
+    return true;
   }
 
   public async updateStatus(

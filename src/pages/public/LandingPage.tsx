@@ -45,7 +45,7 @@ const CATEGORY_ICONS: Record<ComplaintCategory, React.ReactNode> = {
 };
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
-  const { isAuthenticated, role, loginAsDemo } = useAuth();
+  const { isAuthenticated, role } = useAuth();
   const { complaints } = useComplaints();
   const [trackId, setTrackId] = useState('');
   const [trackError, setTrackError] = useState('');
@@ -69,7 +69,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
 
   const handleCategoryClick = (category: ComplaintCategory) => {
     if (!isAuthenticated) {
-      loginAsDemo('student');
+      onNavigate('/login');
+      return;
     }
     onNavigate(`/student/submit?category=${encodeURIComponent(category)}`);
   };
@@ -194,8 +195,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               variant="primary"
               size="lg"
               onClick={() => {
-                if (!isAuthenticated) loginAsDemo('student');
-                onNavigate('/student/submit');
+                if (!isAuthenticated) onNavigate('/login');
+                else onNavigate('/student/submit');
               }}
               leftIcon={<PlusCircle size={20} />}
               style={{
@@ -210,8 +211,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               variant="outline"
               size="lg"
               onClick={() => {
-                if (!isAuthenticated) loginAsDemo('student');
-                onNavigate('/student/complaints');
+                if (!isAuthenticated) onNavigate('/login');
+                else onNavigate('/student/complaints');
               }}
               leftIcon={<FileCheck size={20} />}
               style={{
@@ -671,8 +672,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
           variant="gold"
           size="lg"
           onClick={() => {
-            if (!isAuthenticated) loginAsDemo('student');
-            onNavigate('/student/submit');
+            if (!isAuthenticated) onNavigate('/login');
+            else onNavigate('/student/submit');
           }}
           leftIcon={<PlusCircle size={18} />}
         >

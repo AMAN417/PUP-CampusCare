@@ -318,17 +318,32 @@ export class SupabaseComplaintRepository implements IComplaintRepository {
       updated_at: new Date().toISOString(),
     };
 
+    // Admin-only fields
     if (data.assignedDepartment !== undefined) {
       updates.assigned_department = data.assignedDepartment;
     }
     if (data.assignedTo !== undefined) {
       updates.assigned_to = data.assignedTo;
     }
+    if (data.isEscalated !== undefined) {
+      updates.is_escalated = data.isEscalated;
+    }
+
+    // Shared fields (student or admin)
     if (data.priority !== undefined) {
       updates.priority = data.priority;
     }
-    if (data.isEscalated !== undefined) {
-      updates.is_escalated = data.isEscalated;
+    if (data.title !== undefined) {
+      updates.title = data.title.trim();
+    }
+    if (data.description !== undefined) {
+      updates.description = data.description.trim();
+    }
+    if (data.category !== undefined) {
+      updates.category = data.category;
+    }
+    if (data.location !== undefined) {
+      updates.location = data.location.trim();
     }
 
     const { data: updated, error } = await supabase
@@ -343,6 +358,23 @@ export class SupabaseComplaintRepository implements IComplaintRepository {
     }
 
     return this.getById(updated.complaint_id);
+  }
+
+  public async delete(id: string): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    const record = await this.findComplaintRecord(id);
+    if (!record) return false;
+
+    const { error } = await supabase
+      .from('complaints')
+      .delete()
+      .eq('id', record.id);
+
+    if (error) {
+      throw new Error(`Failed to delete complaint: ${error.message}`);
+    }
+
+    return true;
   }
 
   public async updateStatus(

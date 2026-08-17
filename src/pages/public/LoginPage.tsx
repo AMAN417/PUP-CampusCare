@@ -4,31 +4,32 @@ import { useToast } from '../../context/ToastContext';
 import { PUPLogo } from '../../components/common/PUPLogo';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
-import { GraduationCap, Shield, Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
+import { Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
 
 interface LoginPageProps {
   onNavigate: (path: string) => void;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
-  const { login, loginAsDemo } = useAuth();
+  const { login } = useAuth();
   const { success } = useToast();
 
-  const [email, setEmail] = useState('harman.student@demo.pup.ac.in');
-  const [password, setPassword] = useState('password123');
-  const [role, setRole] = useState<'student' | 'admin'>('student');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleRegularLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) {
-      setError('Please enter your university email or Roll number.');
+    if (!email.trim() || !password) {
+      setError('Please enter your university email and password.');
       return;
     }
 
     try {
+      setIsSubmitting(true);
       setError('');
-      const loggedUser = await login(email, password);
+      const loggedUser = await login(email.trim(), password);
       if (loggedUser) {
         success('Logged In Successfully', `Welcome back to PUP CampusCare`);
         onNavigate(loggedUser.role === 'admin' ? '/admin/dashboard' : '/student/dashboard');
@@ -38,28 +39,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
     } catch (err: any) {
       const msg = err?.message || 'Login failed. Please check your credentials.';
       setError(msg);
-    }
-  };
-
-  const handleDemoClick = async (targetRole: 'student' | 'admin') => {
-    try {
-      setError('');
-      await loginAsDemo(targetRole);
-      success(
-        `Switched to ${targetRole === 'student' ? 'Student Harmanpreet' : 'Admin Dr. Rajinder'}`,
-        'Demo authentication active'
-      );
-      onNavigate(targetRole === 'admin' ? '/admin/dashboard' : '/student/dashboard');
-    } catch (err: any) {
-      setError(err?.message || 'Demo login failed.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div
       style={{
-        maxWidth: '460px',
-        margin: '2rem auto',
+        maxWidth: '440px',
+        margin: '2.5rem auto',
         width: '100%',
       }}
     >
@@ -71,113 +60,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
           </div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginTop: '0.5rem' }}>Sign In to Portal</h2>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-            Access complaint status, reporting tools, and resolution logs
+            Access complaint tracking, reporting tools, and maintenance logs
           </p>
-        </div>
-
-        {/* Quick Demo Login Preset Boxes */}
-        <div
-          style={{
-            background: 'var(--pup-maroon-subtle)',
-            border: '1px solid rgba(122, 18, 40, 0.15)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '1rem',
-            marginBottom: '1.5rem',
-          }}
-        >
-          <div
-            style={{
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              color: 'var(--pup-maroon)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              marginBottom: '0.6rem',
-              textAlign: 'center',
-            }}
-          >
-            ⚡ Instant 1-Click Demo Login
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-            <Button
-              type="button"
-              variant="primary"
-              size="sm"
-              onClick={() => handleDemoClick('student')}
-              leftIcon={<GraduationCap size={15} />}
-              style={{ fontSize: '0.8125rem' }}
-            >
-              As Student
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() => handleDemoClick('admin')}
-              leftIcon={<Shield size={15} />}
-              style={{ fontSize: '0.8125rem' }}
-            >
-              As Admin
-            </Button>
-          </div>
-        </div>
-
-        {/* Role Toggle Selector */}
-        <div
-          style={{
-            display: 'flex',
-            background: 'var(--bg-main)',
-            borderRadius: 'var(--radius-md)',
-            padding: '4px',
-            marginBottom: '1.25rem',
-            border: '1px solid var(--border-light)',
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => {
-              setRole('student');
-              setEmail('harman.student@demo.pup.ac.in');
-            }}
-            style={{
-              flex: 1,
-              padding: '8px',
-              borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              background: role === 'student' ? 'var(--bg-surface)' : 'transparent',
-              color: role === 'student' ? 'var(--pup-maroon)' : 'var(--text-secondary)',
-              boxShadow: role === 'student' ? 'var(--shadow-sm)' : 'none',
-              transition: 'all var(--transition-fast)',
-            }}
-          >
-            Student Account
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setRole('admin');
-              setEmail('rajinder.admin@demo.pup.ac.in');
-            }}
-            style={{
-              flex: 1,
-              padding: '8px',
-              borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              background: role === 'admin' ? 'var(--bg-surface)' : 'transparent',
-              color: role === 'admin' ? 'var(--pup-navy)' : 'var(--text-secondary)',
-              boxShadow: role === 'admin' ? 'var(--shadow-sm)' : 'none',
-              transition: 'all var(--transition-fast)',
-            }}
-          >
-            Staff / Admin
-          </button>
         </div>
 
         {/* Credentials Form */}
@@ -203,7 +87,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
           )}
 
           <div className="form-group">
-            <label className="form-label">University Email or Roll Number</label>
+            <label className="form-label">University Email or ID</label>
             <div style={{ position: 'relative' }}>
               <Mail
                 size={16}
@@ -221,8 +105,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
                 style={{ paddingLeft: '36px' }}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="e.g. harman.student@demo.pup.ac.in"
+                placeholder="name@pup.ac.in or Roll No."
                 required
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -248,6 +133,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -256,10 +142,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
             type="submit"
             variant="primary"
             size="lg"
+            isLoading={isSubmitting}
+            disabled={isSubmitting}
             style={{ width: '100%', marginTop: '0.5rem' }}
-            rightIcon={<ArrowRight size={16} />}
+            rightIcon={!isSubmitting ? <ArrowRight size={16} /> : undefined}
           >
-            Sign In
+            {isSubmitting ? 'Signing In...' : 'Sign In'}
           </Button>
         </form>
 

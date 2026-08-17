@@ -37,6 +37,17 @@ export interface ComplaintContextType {
     priority: Priority;
     attachments?: any[];
   }) => Promise<Complaint>;
+  editComplaint: (
+    complaintId: string,
+    updates: {
+      title?: string;
+      description?: string;
+      category?: any;
+      priority?: Priority;
+      location?: string;
+    }
+  ) => Promise<Complaint | null>;
+  deleteComplaint: (complaintId: string) => Promise<boolean>;
   updateStatus: (
     complaintId: string,
     newStatus: ComplaintStatus,
@@ -485,6 +496,64 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({
     success('CSV Exported', 'Complaints file downloaded successfully');
   };
 
+  const editComplaint = async (
+    complaintId: string,
+    updates: {
+      title?: string;
+      description?: string;
+      category?: any;
+      priority?: Priority;
+      location?: string;
+    }
+  ): Promise<Complaint | null> => {
+    if (isApiMode) {
+      try {
+        const updated = await complaintsApi.updateComplaint(complaintId, updates);
+        if (updated) {
+          setComplaints((prev) =>
+            prev.map((c) =>
+              c.id.toLowerCase() === complaintId.toLowerCase() ? updated : c
+            )
+          );
+          return updated;
+        }
+        return null;
+      } catch (err: any) {
+        toastError('Edit Failed', err?.message || 'Failed to update complaint.');
+        return null;
+      }
+    } else {
+      // Local storage fallback: find and update
+      const existing = complaints.find((c) => c.id.toLowerCase() === complaintId.toLowerCase());
+      if (!existing) return null;
+      const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
+      setComplaints((prev) =>
+        prev.map((c) => (c.id.toLowerCase() === complaintId.toLowerCase() ? updated : c))
+      );
+      return updated;
+    }
+  };
+
+  const deleteComplaint = async (complaintId: string): Promise<boolean> => {
+    if (isApiMode) {
+      try {
+        await complaintsApi.deleteComplaint(complaintId);
+        setComplaints((prev) =>
+          prev.filter((c) => c.id.toLowerCase() !== complaintId.toLowerCase())
+        );
+        return true;
+      } catch (err: any) {
+        toastError('Delete Failed', err?.message || 'Failed to delete complaint.');
+        return false;
+      }
+    } else {
+      setComplaints((prev) =>
+        prev.filter((c) => c.id.toLowerCase() !== complaintId.toLowerCase())
+      );
+      return true;
+    }
+  };
+
   // Filter notifications relevant to current user
   const userNotifications = notifications.filter((n) => {
     if (!user) return true;
@@ -514,6 +583,8 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({
         getComplaintById,
         fetchComplaintById,
         createComplaint,
+        editComplaint,
+        deleteComplaint,
         updateStatus,
         assignOfficer,
         addComment,

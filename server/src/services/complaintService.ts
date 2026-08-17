@@ -86,6 +86,31 @@ export class ComplaintService {
     return updated;
   }
 
+  public async deleteComplaint(
+    id: string,
+    userId: string,
+    userRole: string
+  ): Promise<void> {
+    const complaint = await this.getById(id);
+
+    // Students can only delete their own complaints
+    if (userRole === 'student') {
+      const isOwner =
+        complaint.studentId === userId ||
+        // Demo seed fallback
+        (complaint.studentName && complaint.studentId === 'user-student-1' && userId === 'user-student-1');
+      if (!isOwner) {
+        throw new AppError('Access denied: You can only delete your own complaints.', 403);
+      }
+    }
+
+    const repo = getComplaintRepository();
+    const deleted = await repo.delete(id);
+    if (!deleted) {
+      throw new AppError(`Failed to delete complaint '${id}'. It may no longer exist.`, 404);
+    }
+  }
+
   public async updateStatus(
     id: string,
     newStatus: ComplaintStatus,

@@ -37,10 +37,16 @@ export interface CreateComplaintPayload {
 }
 
 export interface PatchComplaintPayload {
+  // Admin-only fields
   assignedDepartment?: string;
   assignedTo?: string;
-  priority?: Priority;
   isEscalated?: boolean;
+  // Student-editable fields (own complaint only)
+  priority?: Priority;
+  title?: string;
+  description?: string;
+  category?: ComplaintCategory;
+  location?: string;
 }
 
 export interface UpdateStatusPayload {
@@ -86,6 +92,19 @@ export const complaintsApi = {
     payload: PatchComplaintPayload
   ): Promise<Complaint> => {
     return apiClient.patch<Complaint>(`/complaints/${encodeURIComponent(id)}`, payload);
+  },
+
+  // Student-facing: update own complaint's editable fields
+  updateComplaint: async (
+    id: string,
+    payload: Pick<PatchComplaintPayload, 'title' | 'description' | 'category' | 'priority' | 'location'>
+  ): Promise<Complaint> => {
+    return apiClient.patch<Complaint>(`/complaints/${encodeURIComponent(id)}`, payload);
+  },
+
+  // Student-facing: delete own complaint
+  deleteComplaint: async (id: string): Promise<void> => {
+    return apiClient.delete<void>(`/complaints/${encodeURIComponent(id)}`);
   },
 
   updateStatus: async (

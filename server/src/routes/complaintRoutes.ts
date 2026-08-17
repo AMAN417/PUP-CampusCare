@@ -4,6 +4,7 @@ import {
   getComplaintById,
   createComplaint,
   patchComplaint,
+  deleteComplaint,
   updateComplaintStatus,
   addComplaintComment,
 } from '../controllers/complaintController.js';
@@ -30,13 +31,22 @@ router.get('/complaints/:id', validateComplaintId, getComplaintById);
 // POST /api/campuscare/complaints - Submit new complaint (identity derived server-side)
 router.post('/complaints', validateCreateComplaint, createComplaint);
 
-// PATCH /api/campuscare/complaints/:id - Partial update (Admin only)
+// PATCH /api/campuscare/complaints/:id - Partial update
+// Students can edit their own complaint (title, description, category, priority, location)
+// Admins can also update assignment fields
+// Ownership and field whitelisting enforced in controller
 router.patch(
   '/complaints/:id',
-  requireAdmin,
   validateComplaintId,
   validatePatchComplaint,
   patchComplaint
+);
+
+// DELETE /api/campuscare/complaints/:id - Delete complaint (owner student or admin)
+router.delete(
+  '/complaints/:id',
+  validateComplaintId,
+  deleteComplaint
 );
 
 // POST /api/campuscare/complaints/:id/status - Advance lifecycle status (Admin only)

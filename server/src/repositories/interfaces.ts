@@ -39,10 +39,16 @@ export interface CreateComplaintDto {
 }
 
 export interface PatchComplaintDto {
+  // Admin-only fields
   assignedDepartment?: string;
   assignedTo?: string;
-  priority?: Priority;
   isEscalated?: boolean;
+  // Shared fields (student can also update these on own complaint)
+  priority?: Priority;
+  title?: string;
+  description?: string;
+  category?: ComplaintCategory;
+  location?: string;
 }
 
 export interface UpdateStatusDto {
@@ -75,6 +81,7 @@ export interface IComplaintRepository {
   getById(id: string): Promise<Complaint | null>;
   create(data: CreateComplaintDto): Promise<Complaint>;
   patch(id: string, data: PatchComplaintDto): Promise<Complaint | null>;
+  delete(id: string): Promise<boolean>;
   updateStatus(id: string, data: UpdateStatusDto): Promise<Complaint | null>;
   addComment(
     id: string,

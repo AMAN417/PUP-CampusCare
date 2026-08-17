@@ -8,6 +8,7 @@ import {
   ComplaintStatus,
   Priority,
 } from '../types/index.js';
+import type { PatchComplaintDto } from '../repositories/interfaces.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 // Helper to check if a complaint belongs to the authenticated student
@@ -128,12 +129,67 @@ export const patchComplaint = async (
 ): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const updated = await complaintService.patch(id, req.body);
+    const user = req.user;
+
+    if (!user) {
+      throw new AppError('Authentication required.', 401);
+    }
+
+    let patchData: PatchComplaintDto;
+
+    if (user.role === 'student') {
+      // Students: verify ownership first
+      const complaint = await complaintService.getById(id);
+      if (!isStudentComplaintOwner(complaint, user)) {
+        throw new AppError('Access denied: You can only edit your own complaints.', 403);
+      }
+      // Whitelist: students may only edit these fields
+      const { title, description, category, priority, location } = req.body;
+      patchData = {};
+      if (title !== undefined) patchData.title = title;
+      if (description !== undefined) patchData.description = description;
+      if (category !== undefined) patchData.category = category;
+      if (priority !== undefined) patchData.priority = priority;
+      if (location !== undefined) patchData.location = location;
+    } else {
+      // Admins: allow all patch fields
+      patchData = req.body as PatchComplaintDto;
+    }
+
+    const updated = await complaintService.patch(id, patchData);
 
     const response: ApiResponse<Complaint> = {
       success: true,
       message: `Complaint #${updated.id} updated successfully.`,
       data: updated,
+      timestamp: new Date().toISOString(),
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteComplaint = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const user = req.user;
+
+    if (!user) {
+      throw new AppError('Authentication required.', 401);
+    }
+
+    await complaintService.deleteComplaint(id, user.id, user.role);
+
+    const response: ApiResponse<null> = {
+      success: true,
+      message: `Complaint #${id} has been deleted.`,
+      data: null,
       timestamp: new Date().toISOString(),
     };
 
