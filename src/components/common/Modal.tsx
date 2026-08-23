@@ -51,7 +51,7 @@ export const Modal: React.FC<ModalProps> = ({
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.2 }}
             className="modal-dialog"
-            style={{ maxWidth }}
+            style={{ maxWidth: `min(${maxWidth}, calc(100vw - 1.5rem))` }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header">

@@ -3,8 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { PUPLogo } from '../../components/common/PUPLogo';
 import { Button } from '../../components/common/Button';
-import { Card } from '../../components/common/Card';
-import { User, Mail, Lock, Phone, BookOpen, Home, ArrowRight } from 'lucide-react';
+import { User, Mail, Lock, Phone, BookOpen, Home, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 interface RegisterPageProps {
   onNavigate: (path: string) => void;
@@ -50,6 +49,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
 
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,8 +84,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div style={{ maxWidth: '540px', margin: '2rem auto', width: '100%' }}>
-      <Card style={{ padding: '2rem' }}>
+    <div className="auth-page-container wide">
+      <div className="auth-card-box">
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{ display: 'inline-block', marginBottom: '0.75rem' }}>
             <PUPLogo size="lg" />
@@ -141,9 +141,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="form-grid-2">
             <div className="form-group">
-              <label className="form-label">University Email *</label>
+              <label className="form-label">Email *</label>
               <div style={{ position: 'relative' }}>
                 <Mail
                   size={16}
@@ -153,6 +153,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     top: '50%',
                     transform: 'translateY(-50%)',
                     color: 'var(--text-muted)',
+                    pointerEvents: 'none',
                   }}
                 />
                 <input
@@ -237,7 +238,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="form-grid-2">
             <div className="form-group">
               <label className="form-label">Phone Number</label>
               <div style={{ position: 'relative' }}>
@@ -249,6 +250,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     top: '50%',
                     transform: 'translateY(-50%)',
                     color: 'var(--text-muted)',
+                    pointerEvents: 'none',
                   }}
                 />
                 <input
@@ -273,17 +275,43 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     top: '50%',
                     transform: 'translateY(-50%)',
                     color: 'var(--text-muted)',
+                    pointerEvents: 'none',
                   }}
                 />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   className="form-input"
-                  style={{ paddingLeft: '36px' }}
+                  style={{ paddingLeft: '36px', paddingRight: '38px' }}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder="••••••••"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    padding: '4px',
+                    cursor: 'pointer',
+                    color: 'var(--text-muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 'var(--radius-sm)',
+                    transition: 'color var(--transition-fast)',
+                  }}
+                  disabled={submitting}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
           </div>
@@ -316,7 +344,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
             Sign In
           </button>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };

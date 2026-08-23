@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { authApi } from '../../api/authApi';
 import { PUPLogo } from '../../components/common/PUPLogo';
 import { Button } from '../../components/common/Button';
-import { Card } from '../../components/common/Card';
 import { Mail, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface ForgotPasswordPageProps {
@@ -18,7 +17,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
-      setError('Please enter your university email address.');
+      setError('Please enter your email address.');
       return;
     }
 
@@ -27,24 +26,16 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
       setError('');
       await authApi.forgotPassword(email.trim());
       setIsSuccess(true);
-    } catch {
-      // Show generic message even on unexpected errors to protect user privacy
-      setIsSuccess(true);
+    } catch (err: any) {
+      setError(err?.message || 'Unable to process recovery request. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div
-      style={{
-        maxWidth: '460px',
-        margin: '3rem auto',
-        width: '100%',
-        padding: '0 1rem',
-      }}
-    >
-      <Card style={{ padding: '2.25rem 2rem' }}>
+    <div className="auth-page-container">
+      <div className="auth-card-box">
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{ display: 'inline-block', marginBottom: '0.75rem' }}>
@@ -54,7 +45,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
             Reset Password
           </h2>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem', lineHeight: 1.5 }}>
-            Enter your registered university email to receive a secure recovery link.
+            Enter your registered email to receive a secure recovery link.
           </p>
         </div>
 
@@ -118,7 +109,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
             )}
 
             <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-              <label className="form-label" style={{ fontWeight: 600 }}>Registered University Email</label>
+              <label className="form-label" style={{ fontWeight: 600 }}>Email</label>
               <div style={{ position: 'relative' }}>
                 <Mail
                   size={16}
@@ -128,6 +119,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
                     top: '50%',
                     transform: 'translateY(-50%)',
                     color: 'var(--text-muted)',
+                    pointerEvents: 'none',
                   }}
                 />
                 <input
@@ -176,7 +168,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
             </div>
           </form>
         )}
-      </Card>
+      </div>
     </div>
   );
 };

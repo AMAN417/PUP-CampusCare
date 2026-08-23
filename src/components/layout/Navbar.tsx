@@ -7,8 +7,12 @@ import {
   User,
   LogOut,
   Menu,
+  X,
   PlusCircle,
   ArrowRight,
+  Home,
+  HelpCircle,
+  Layers,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -25,6 +29,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, onOpenM
 
   const [showNotifs, setShowNotifs] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [publicMenuOpen, setPublicMenuOpen] = useState(false);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -43,19 +48,23 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, onOpenM
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handlePublicNav = (path: string, hashId?: string) => {
+    onNavigate(path);
+    setPublicMenuOpen(false);
+    if (hashId) {
+      setTimeout(() => {
+        document.getElementById(hashId)?.scrollIntoView({ behavior: 'smooth' });
+      }, 150);
+    }
+  };
+
   return (
     <>
-      {/* Demo Disclaimer Bar */}
-      <div className="demo-disclaimer-banner">
-        <span>
-          ⚡ <strong>Punjabi University Patiala Demo Sandbox</strong> — Standalone complaint tracking system with local data persistence.
-        </span>
-      </div>
-
       <header className="navbar">
         <div className="navbar-inner">
-          {/* Brand Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {/* Brand Logo & Mobile Toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {/* Authenticated Dashboard Drawer Toggle */}
             {isAuthenticated && onOpenMobileMenu && (
               <button
                 type="button"
@@ -66,6 +75,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, onOpenM
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  minHeight: '36px',
                 }}
                 aria-label="Open navigation menu"
               >
@@ -73,16 +83,36 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, onOpenM
               </button>
             )}
 
+            {/* Public Mobile Menu Toggle (on screens < 768px) */}
+            {!isAuthenticated && (
+              <button
+                type="button"
+                onClick={() => setPublicMenuOpen(!publicMenuOpen)}
+                className="btn-ghost"
+                style={{
+                  padding: '6px',
+                  display: 'none',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '36px',
+                }}
+                id="public-mobile-menu-btn"
+                aria-label="Toggle navigation menu"
+              >
+                {publicMenuOpen ? <X size={22} /> : <Menu size={22} />}
+              </button>
+            )}
+
             <div
               onClick={() => onNavigate(isAuthenticated ? (role === 'admin' ? '/admin/dashboard' : '/student/dashboard') : '/')}
-              style={{ cursor: 'pointer' }}
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
             >
               <PUPLogo size="md" />
             </div>
           </div>
 
-          {/* Center Links (Public Only) */}
-          <nav className="nav-links" style={{ display: isAuthenticated ? 'none' : 'flex' }}>
+          {/* Center Links (Public Desktop Only) */}
+          <nav className="nav-links desktop-only" style={{ display: isAuthenticated ? 'none' : 'flex' }}>
             <button
               type="button"
               className={`nav-link ${currentPath === '/' ? 'active' : ''}`}
@@ -193,7 +223,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, onOpenM
                           position: 'absolute',
                           top: '120%',
                           right: 0,
-                          width: '340px',
+                          width: 'min(340px, calc(100vw - 24px))',
+                          maxWidth: 'calc(100vw - 24px)',
                           background: 'var(--bg-surface)',
                           borderRadius: 'var(--radius-lg)',
                           boxShadow: 'var(--shadow-xl)',
@@ -345,7 +376,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, onOpenM
                           position: 'absolute',
                           top: '120%',
                           right: 0,
-                          width: '220px',
+                          width: 'min(240px, calc(100vw - 24px))',
+                          maxWidth: 'calc(100vw - 24px)',
                           background: 'var(--bg-surface)',
                           borderRadius: 'var(--radius-lg)',
                           boxShadow: 'var(--shadow-xl)',
@@ -409,11 +441,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, onOpenM
                 </div>
               </>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <button
                   type="button"
                   onClick={() => onNavigate('/login')}
                   className="btn btn-outline btn-sm"
+                  style={{ padding: '0.35rem 0.65rem', fontSize: '0.8125rem' }}
                 >
                   Sign In
                 </button>
@@ -421,6 +454,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, onOpenM
                   type="button"
                   onClick={() => onNavigate('/register')}
                   className="btn btn-primary btn-sm"
+                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.8125rem' }}
                 >
                   Register
                 </button>
@@ -429,6 +463,148 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, onOpenM
           </div>
         </div>
       </header>
+
+      {/* Public Mobile Drawer */}
+      <AnimatePresence>
+        {!isAuthenticated && publicMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="mobile-drawer-overlay"
+              onClick={() => setPublicMenuOpen(false)}
+            />
+            <motion.div
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+              className="mobile-drawer-content"
+              style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+            >
+              <div>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '1.5rem',
+                    paddingBottom: '0.75rem',
+                    borderBottom: '1px solid var(--border-light)',
+                  }}
+                >
+                  <PUPLogo size="sm" />
+                  <button
+                    type="button"
+                    onClick={() => setPublicMenuOpen(false)}
+                    className="btn-ghost"
+                    style={{ padding: '6px', border: 'none', cursor: 'pointer' }}
+                    aria-label="Close menu"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => handlePublicNav('/')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      padding: '0.75rem 1rem',
+                      borderRadius: 'var(--radius-md)',
+                      border: 'none',
+                      background: currentPath === '/' ? 'var(--pup-maroon-subtle)' : 'transparent',
+                      color: currentPath === '/' ? 'var(--pup-maroon)' : 'var(--text-primary)',
+                      fontWeight: 600,
+                      fontSize: '0.9375rem',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <Home size={18} />
+                    <span>Home</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handlePublicNav('/', 'how-it-works')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      padding: '0.75rem 1rem',
+                      borderRadius: 'var(--radius-md)',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--text-primary)',
+                      fontWeight: 600,
+                      fontSize: '0.9375rem',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <HelpCircle size={18} />
+                    <span>How It Works</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handlePublicNav('/', 'categories')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      padding: '0.75rem 1rem',
+                      borderRadius: 'var(--radius-md)',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--text-primary)',
+                      fontWeight: 600,
+                      fontSize: '0.9375rem',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <Layers size={18} />
+                    <span>Categories</span>
+                  </button>
+                </nav>
+              </div>
+
+              <div
+                style={{
+                  paddingTop: '1.25rem',
+                  borderTop: '1px solid var(--border-light)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.65rem',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => handlePublicNav('/login')}
+                  className="btn btn-outline"
+                  style={{ width: '100%' }}
+                >
+                  Sign In to Portal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePublicNav('/register')}
+                  className="btn btn-primary"
+                  style={{ width: '100%' }}
+                >
+                  Create New Account
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 };

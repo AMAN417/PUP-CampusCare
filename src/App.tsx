@@ -38,6 +38,16 @@ const MainApp: React.FC = () => {
   const getInitialPath = (): string => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.replace(/^#/, '');
+      const search = window.location.search || '';
+
+      if (
+        hash.includes('type=recovery') ||
+        search.includes('type=recovery') ||
+        (hash.includes('access_token=') && !hash.startsWith('/student') && !hash.startsWith('/admin'))
+      ) {
+        return '/reset-password';
+      }
+
       if (hash) return hash;
     }
     return '/';
@@ -49,7 +59,17 @@ const MainApp: React.FC = () => {
   useEffect(() => {
     const handlePopState = () => {
       const hash = window.location.hash.replace(/^#/, '');
-      setCurrentPath(hash || '/');
+      const search = window.location.search || '';
+
+      if (
+        hash.includes('type=recovery') ||
+        search.includes('type=recovery') ||
+        (hash.includes('access_token=') && !hash.startsWith('/student') && !hash.startsWith('/admin'))
+      ) {
+        setCurrentPath('/reset-password');
+      } else {
+        setCurrentPath(hash || '/');
+      }
     };
 
     window.addEventListener('popstate', handlePopState);

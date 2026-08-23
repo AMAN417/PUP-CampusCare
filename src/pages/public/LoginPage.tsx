@@ -3,8 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { PUPLogo } from '../../components/common/PUPLogo';
 import { Button } from '../../components/common/Button';
-import { Card } from '../../components/common/Card';
-import { Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
+import { Mail, Lock, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 interface LoginPageProps {
   onNavigate: (path: string) => void;
@@ -16,13 +15,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleRegularLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password) {
-      setError('Please enter your university email and password.');
+      setError('Please enter your email and password.');
       return;
     }
 
@@ -45,14 +45,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div
-      style={{
-        maxWidth: '440px',
-        margin: '2.5rem auto',
-        width: '100%',
-      }}
-    >
-      <Card style={{ padding: '2rem' }}>
+    <div className="auth-page-container">
+      <div className="auth-card-box">
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{ display: 'inline-block', marginBottom: '0.75rem' }}>
@@ -87,7 +81,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
           )}
 
           <div className="form-group">
-            <label className="form-label">University Email or ID</label>
+            <label className="form-label">Email</label>
             <div style={{ position: 'relative' }}>
               <Mail
                 size={16}
@@ -97,6 +91,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
                   top: '50%',
                   transform: 'translateY(-50%)',
                   color: 'var(--text-muted)',
+                  pointerEvents: 'none',
                 }}
               />
               <input
@@ -140,18 +135,44 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
                   top: '50%',
                   transform: 'translateY(-50%)',
                   color: 'var(--text-muted)',
+                  pointerEvents: 'none',
                 }}
               />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 className="form-input"
-                style={{ paddingLeft: '36px' }}
+                style={{ paddingLeft: '36px', paddingRight: '38px' }}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
                 disabled={isSubmitting}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  padding: '4px',
+                  cursor: 'pointer',
+                  color: 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 'var(--radius-sm)',
+                  transition: 'color var(--transition-fast)',
+                }}
+                disabled={isSubmitting}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           </div>
 
@@ -184,7 +205,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
             Create New Account
           </button>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };

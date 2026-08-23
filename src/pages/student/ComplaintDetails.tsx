@@ -405,7 +405,7 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
           gap: '1.5rem',
         }}
       >
@@ -599,7 +599,7 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
           </div>
 
           {/* Category & Priority — 2 columns */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div className="form-grid-2">
             <div className="form-group">
               <label className="form-label">Category</label>
               <select

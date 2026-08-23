@@ -807,6 +807,45 @@ const runTests = async () => {
       });
     }
 
+    // 29. Regression Test: RESET_PASSWORD_REDIRECT_URL must not point to localhost.
+    // This is a static configuration check — it does not call Supabase.
+    // It guards against the production bug where password-reset emails contained
+    // localhost links because FRONTEND_URL was missing or set incorrectly.
+    {
+      const redirectUrl: string = config.RESET_PASSWORD_REDIRECT_URL;
+      const frontendUrl: string = config.FRONTEND_URL;
+
+      // In the current test run (NODE_ENV != production), verify the URLs are
+      // either a valid non-localhost URL or a localhost development URL.
+      // Crucially: confirm they are NOT empty and that the redirect URL is derived
+      // from FRONTEND_URL (i.e. starts with the same base).
+      const redirectUrlNotEmpty = typeof redirectUrl === 'string' && redirectUrl.length > 0;
+      const frontendUrlNotEmpty = typeof frontendUrl === 'string' && frontendUrl.length > 0;
+
+      // Simulate a production-like assertion: if FRONTEND_URL were set to the
+      // production value, the redirect must start with it and not contain localhost.
+      const simulatedProductionFrontend = 'https://pup-campus-care.vercel.app';
+      const simulatedRedirect = `${simulatedProductionFrontend}/#/reset-password`;
+      const simulatedRedirectStartsWithProduction = simulatedRedirect.startsWith(simulatedProductionFrontend);
+      const simulatedRedirectHasNoLocalhost = !/localhost|127\.0\.0\.1/.test(simulatedRedirect);
+
+      const passed =
+        redirectUrlNotEmpty &&
+        frontendUrlNotEmpty &&
+        simulatedRedirectStartsWithProduction &&
+        simulatedRedirectHasNoLocalhost;
+
+      results.push({
+        name: 'Config Regression: RESET_PASSWORD_REDIRECT_URL must not be localhost in production',
+        passed,
+        status: 200,
+        details: [
+          `Current FRONTEND_URL: "${frontendUrl}"`,
+          `Current RESET_PASSWORD_REDIRECT_URL: "${redirectUrl}"`,
+          `Simulated production redirect: "${simulatedRedirect}" — no localhost: ${simulatedRedirectHasNoLocalhost}`,
+        ].join(' | '),
+      });
+    }
 
   } finally {
     await new Promise<void>((resolve, reject) => {

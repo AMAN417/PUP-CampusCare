@@ -21,8 +21,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           maxWidth: '1280px',
           margin: '0 auto',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '2.5rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
+          gap: '2rem',
           marginBottom: '2.5rem',
         }}
       >
@@ -55,7 +55,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               fontWeight: 600,
             }}
           >
-            <span>Demo Sandbox Edition</span>
+            <span>Official Campus Portal</span>
           </div>
         </div>
 
@@ -194,7 +194,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         }}
       >
         <div>
-          © {new Date().getFullYear()} PUP CampusCare — Punjabi University Patiala. Fictional demo dataset for complaint management.
+          © {new Date().getFullYear()} PUP CampusCare — Punjabi University Patiala. All rights reserved.
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <span>Report. Track. Resolve.</span>

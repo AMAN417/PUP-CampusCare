@@ -16,7 +16,6 @@ import {
   Zap,
   Smartphone,
   Sparkles,
-  FileCheck,
   Home,
   GraduationCap,
   Droplets,
@@ -76,193 +75,120 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4.5rem', paddingBottom: '3rem' }}>
+    <div className="landing-container">
       {/* 1. HERO SECTION */}
-      <section
-        style={{
-          background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #3B0713 100%)',
-          borderRadius: 'var(--radius-xl)',
-          padding: '4.5rem 2rem',
-          color: '#FFFFFF',
-          position: 'relative',
-          overflow: 'hidden',
-          boxShadow: 'var(--shadow-xl)',
-        }}
-      >
+      <section className="hero-section">
         {/* Subtle decorative glow circles */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '-20%',
-            right: '-10%',
-            width: '450px',
-            height: '450px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(122, 18, 40, 0.4) 0%, rgba(0,0,0,0) 70%)',
-            pointerEvents: 'none',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '-20%',
-            left: '10%',
-            width: '350px',
-            height: '350px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(217, 119, 6, 0.25) 0%, rgba(0,0,0,0) 70%)',
-            pointerEvents: 'none',
-          }}
-        />
+        <div className="hero-glow-1" />
+        <div className="hero-glow-2" />
 
-        <div style={{ maxWidth: '850px', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 2 }}>
+        <div className="hero-content">
           {/* Tagline Badge */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '6px 14px',
-              borderRadius: 'var(--radius-full)',
-              background: 'rgba(217, 119, 6, 0.18)',
-              border: '1px solid rgba(217, 119, 6, 0.4)',
-              color: '#FDE68A',
-              fontSize: '0.8125rem',
-              fontWeight: 700,
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-              marginBottom: '1.5rem',
-            }}
+            transition={{ duration: 0.35 }}
+            className="hero-badge"
           >
-            <Sparkles size={15} />
-            <span>Official University Campus Support Portal</span>
+            <Sparkles size={14} />
+            <span>Official Campus Support Portal</span>
           </motion.div>
 
           {/* Main Headline */}
           <motion.h1
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            style={{
-              fontSize: 'clamp(2.4rem, 5vw, 3.75rem)',
-              fontWeight: 800,
-              color: '#FFFFFF',
-              letterSpacing: '-0.03em',
-              lineHeight: 1.1,
-              marginBottom: '1.25rem',
-            }}
+            transition={{ duration: 0.45, delay: 0.08 }}
+            className="hero-title"
           >
             PUP CampusCare
-            <br />
-            <span style={{ color: '#F59E0B' }}>"Report. Track. Resolve."</span>
+            <span className="hero-tagline">"Report. Track. Resolve."</span>
           </motion.h1>
 
           {/* Description */}
           <motion.p
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            style={{
-              fontSize: 'clamp(1.05rem, 2vw, 1.25rem)',
-              color: '#CBD5E1',
-              lineHeight: 1.6,
-              maxWidth: '680px',
-              margin: '0 auto 2.25rem auto',
-            }}
+            transition={{ duration: 0.45, delay: 0.15 }}
+            className="hero-desc"
           >
-            A centralized platform for Punjabi University Patiala to report maintenance issues,
-            monitor real-time repair progress, and ensure a safer, cleaner, and well-maintained campus.
+            Centralized platform for Punjabi University Patiala to report maintenance issues,
+            track repairs in real-time, and ensure a cleaner campus.
           </motion.p>
 
-          {/* Call to Action Buttons */}
+          {/* Call to Action Buttons: Login & Create New Account */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '1rem',
-              marginBottom: '3rem',
-            }}
+            transition={{ duration: 0.45, delay: 0.22 }}
+            className="hero-actions"
           >
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={() => {
-                if (!isAuthenticated) onNavigate('/login');
-                else onNavigate('/student/submit');
-              }}
-              leftIcon={<PlusCircle size={20} />}
-              style={{
-                background: 'var(--pup-maroon)',
-                boxShadow: '0 10px 25px rgba(122, 18, 40, 0.4)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-              }}
-            >
-              Report an Issue
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => {
-                if (!isAuthenticated) onNavigate('/login');
-                else onNavigate('/student/complaints');
-              }}
-              leftIcon={<FileCheck size={20} />}
-              style={{
-                color: '#FFFFFF',
-                borderColor: 'rgba(255, 255, 255, 0.3)',
-                background: 'rgba(255, 255, 255, 0.08)',
-              }}
-            >
-              Track Complaints
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={() => onNavigate(role === 'admin' ? '/admin/dashboard' : '/student/dashboard')}
+                  leftIcon={<ArrowRight size={18} />}
+                  className="hero-btn-primary"
+                >
+                  Go to Dashboard
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => onNavigate(role === 'admin' ? '/admin/complaints' : '/student/submit')}
+                  leftIcon={<PlusCircle size={18} />}
+                  className="hero-btn-secondary"
+                >
+                  {role === 'admin' ? 'Manage Complaints' : 'Report an Issue'}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={() => onNavigate('/login')}
+                  leftIcon={<ArrowRight size={18} />}
+                  className="hero-btn-primary"
+                >
+                  Login to Portal
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => onNavigate('/register')}
+                  leftIcon={<PlusCircle size={18} />}
+                  className="hero-btn-secondary"
+                >
+                  Create New Account
+                </Button>
+              </>
+            )}
           </motion.div>
 
           {/* Quick Track Search Widget */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(12px)',
-              borderRadius: 'var(--radius-lg)',
-              padding: '0.75rem',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              maxWidth: '540px',
-              margin: '0 auto',
-            }}
+            transition={{ duration: 0.45, delay: 0.3 }}
+            className="hero-track-widget"
           >
-            <form onSubmit={handleTrackSubmit} style={{ display: 'flex', gap: '0.5rem' }}>
+            <form onSubmit={handleTrackSubmit} style={{ display: 'flex', gap: '0.4rem' }}>
               <input
                 type="text"
                 value={trackId}
                 onChange={(e) => setTrackId(e.target.value)}
-                placeholder="Enter Complaint Reference ID (e.g. PUP-2026-0101)..."
-                style={{
-                  flex: 1,
-                  background: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '0.65rem 1rem',
-                  fontSize: '0.875rem',
-                  color: '#0F172A',
-                  outline: 'none',
-                }}
+                placeholder="Enter Reference ID (e.g. PUP-2026-0101)..."
+                className="hero-track-input"
               />
-              <Button type="submit" variant="gold" size="md" rightIcon={<ArrowRight size={16} />}>
+              <Button type="submit" variant="gold" size="md" rightIcon={<Search size={15} />}>
                 Track
               </Button>
             </form>
             {trackError && (
-              <div style={{ color: '#FCA5A5', fontSize: '0.75rem', marginTop: '0.5rem', textAlign: 'left', paddingLeft: '0.5rem' }}>
+              <div className="hero-track-error">
                 {trackError}
               </div>
             )}

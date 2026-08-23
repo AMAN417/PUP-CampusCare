@@ -63,7 +63,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
           gap: '1.5rem',
         }}
       >
@@ -211,22 +211,21 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
             </form>
           </Card>
 
-          {/* Sandbox Controls Card */}
-          <Card style={{ padding: '1.5rem', background: '#FFFBEB', border: '1px solid #FDE68A' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#B45309', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.4rem' }}>
+          {/* Local Cache Management Card */}
+          <Card style={{ padding: '1.5rem', background: '#F8FAFC', border: '1px solid var(--border-light)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.4rem' }}>
               <RotateCcw size={16} />
-              <span>Demo Sandbox Management</span>
+              <span>Local Storage & Cache</span>
             </div>
-            <p style={{ fontSize: '0.8125rem', color: '#92400E', margin: '0 0 0.85rem 0', lineHeight: 1.4 }}>
-              Reset all modified complaints, status transitions, and comments back to the default Punjabi University sample data state.
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: '0 0 0.85rem 0', lineHeight: 1.4 }}>
+              Clear local cached portal records and reset local application state.
             </p>
             <Button
               variant="outline"
               size="sm"
               onClick={handleResetData}
-              style={{ borderColor: '#D97706', color: '#B45309' }}
             >
-              Reset Sample Demo State
+              Clear Local Cache
             </Button>
           </Card>
         </div>

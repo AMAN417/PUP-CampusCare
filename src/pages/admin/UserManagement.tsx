@@ -134,7 +134,7 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
         </div>
 
         {/* Role Filter Tabs */}
-        <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-surface)', padding: '3px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-surface)', padding: '3px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)', overflowX: 'auto', maxWidth: '100%' }}>
           {(['ALL', 'student', 'admin', 'faculty'] as (UserRole | 'ALL')[]).map((r) => {
             const isActive = roleFilter === r;
             const labels: Record<string, string> = {

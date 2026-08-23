@@ -78,6 +78,7 @@ export const PUPLogo: React.FC<PUPLogoProps> = ({
         </div>
         {showTagline && (
           <span
+            className="pup-logo-tagline"
             style={{
               fontSize: size === 'lg' ? '0.8125rem' : '0.7rem',
               color: lightMode ? '#CBD5E1' : '#64748B',

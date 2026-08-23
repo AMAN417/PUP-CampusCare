@@ -3,8 +3,7 @@ import { authApi } from '../../api/authApi';
 import { getAuthToken, setAuthToken } from '../../api/apiClient';
 import { PUPLogo } from '../../components/common/PUPLogo';
 import { Button } from '../../components/common/Button';
-import { Card } from '../../components/common/Card';
-import { Lock, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
+import { Lock, CheckCircle2, AlertCircle, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 interface ResetPasswordPageProps {
   onNavigate: (path: string) => void;
@@ -13,6 +12,8 @@ interface ResetPasswordPageProps {
 export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [token, setToken] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -79,15 +80,8 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
   };
 
   return (
-    <div
-      style={{
-        maxWidth: '460px',
-        margin: '3rem auto',
-        width: '100%',
-        padding: '0 1rem',
-      }}
-    >
-      <Card style={{ padding: '2.25rem 2rem' }}>
+    <div className="auth-page-container">
+      <div className="auth-card-box">
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{ display: 'inline-block', marginBottom: '0.75rem' }}>
@@ -171,18 +165,44 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
                     top: '50%',
                     transform: 'translateY(-50%)',
                     color: 'var(--text-muted)',
+                    pointerEvents: 'none',
                   }}
                 />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   className="form-input"
-                  style={{ paddingLeft: '36px' }}
+                  style={{ paddingLeft: '36px', paddingRight: '38px' }}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="At least 6 characters"
                   required
                   disabled={isSubmitting}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    padding: '4px',
+                    cursor: 'pointer',
+                    color: 'var(--text-muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 'var(--radius-sm)',
+                    transition: 'color var(--transition-fast)',
+                  }}
+                  disabled={isSubmitting}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
 
@@ -197,18 +217,44 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
                     top: '50%',
                     transform: 'translateY(-50%)',
                     color: 'var(--text-muted)',
+                    pointerEvents: 'none',
                   }}
                 />
                 <input
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   className="form-input"
-                  style={{ paddingLeft: '36px' }}
+                  style={{ paddingLeft: '36px', paddingRight: '38px' }}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Repeat new password"
                   required
                   disabled={isSubmitting}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    padding: '4px',
+                    cursor: 'pointer',
+                    color: 'var(--text-muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 'var(--radius-sm)',
+                    transition: 'color var(--transition-fast)',
+                  }}
+                  disabled={isSubmitting}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
 
@@ -225,7 +271,7 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
             </Button>
           </form>
         )}
-      </Card>
+      </div>
     </div>
   );
 };
