@@ -348,11 +348,20 @@ export class AuthService {
       const redirectUrl = config.RESET_PASSWORD_REDIRECT_URL;
 
       try {
-        await supabase.auth.resetPasswordForEmail(cleanEmail, {
+        const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
           redirectTo: redirectUrl,
         });
-      } catch {
-        // Suppress Supabase errors to prevent account enumeration
+
+        if (error) {
+          // Log the provider error for server-side observability but do NOT surface it to the client.
+          // The forgot-password endpoint must always return the generic recovery response to:
+          //   1. Prevent account enumeration (don't reveal whether the email exists).
+          //   2. Prevent leaking provider/rate-limit details through the public API.
+          console.error(`[AuthService] Supabase resetPasswordForEmail error (${error.status || 'unknown'}):`, error.message);
+        }
+      } catch (err) {
+        // Unexpected network/SDK errors — log and continue. Never propagate to the caller.
+        console.error('[AuthService] Unexpected error during forgotPassword:', err);
       }
     } else {
       // Memory store fallback for test/offline

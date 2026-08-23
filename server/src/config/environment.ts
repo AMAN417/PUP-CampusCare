@@ -34,6 +34,21 @@ const resetPasswordRedirectUrl = (
   `${frontendUrl}/#/reset-password`
 ).trim();
 
+// Production safety guard:
+// If the resolved FRONTEND_URL still points to localhost in a production environment,
+// the server must refuse to start rather than silently sending broken password-reset emails.
+if (nodeEnv === 'production') {
+  const isLocalhostUrl = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?($|\/)/.test(frontendUrl);
+  if (isLocalhostUrl) {
+    throw new Error(
+      `[CampusCare] Production configuration error: FRONTEND_URL must be explicitly configured ` +
+      `and must not point to localhost. ` +
+      `Set FRONTEND_URL=https://pup-campus-care.vercel.app in the production environment. ` +
+      `Current resolved value: "${frontendUrl}"`
+    );
+  }
+}
+
 const parseCorsOrigin = (rawOrigin?: string): any => {
   if (nodeEnv === 'development' || nodeEnv === 'test') {
     const customOrigins = rawOrigin
