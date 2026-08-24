@@ -564,19 +564,26 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Filter notifications relevant to current user
-  const userNotifications = notifications.filter((n) => {
-    if (!user) return true;
-    if (user.role === 'admin') {
-      return (
-        n.userId === user.id ||
-        n.userId === 'all' ||
-        n.type === 'urgent' ||
-        (n as any).type === 'system'
-      );
-    }
-    return n.userId === user.id || n.userId === 'all';
-  });
+  // In API mode, the backend enforces authorized notification ownership.
+  // In local mode, filter using student complaint ownership.
+  const userNotifications = isApiMode
+    ? notifications
+    : notifications.filter((n) => {
+        if (!user) return true;
+        if (user.role === 'admin') {
+          return (
+            n.userId === user.id ||
+            n.userId === 'all' ||
+            n.type === 'urgent' ||
+            (n as any).type === 'system'
+          );
+        }
+        return (
+          n.userId === user.id ||
+          (user.email === 'harman.student@demo.pup.ac.in' &&
+            n.userId === 'user-student-1')
+        );
+      });
 
   const unreadNotificationCount = userNotifications.filter((n) => !n.read).length;
 

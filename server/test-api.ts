@@ -847,6 +847,331 @@ const runTests = async () => {
       });
     }
 
+    // =========================================================================
+    // STUDENT NOTIFICATION ISOLATION & OWNERSHIP TEST SUITE (Tests 30 - 35)
+    // =========================================================================
+
+    // Register Student Alpha
+    const emailAlpha = `student.alpha.${Date.now()}.${Math.floor(Math.random() * 10000)}@demo.pup.ac.in`;
+    const resRegA = await fetch(`${BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Student Alpha',
+        email: emailAlpha,
+        password: 'password123',
+        department: 'Department of Computer Science & Engineering',
+      }),
+    });
+    const bodyRegA = (await resRegA.json()) as any;
+    const tokenA = bodyRegA.data?.token;
+    const userA = bodyRegA.data?.user;
+
+    // Register Student Beta
+    const emailBeta = `student.beta.${Date.now()}.${Math.floor(Math.random() * 10000)}@demo.pup.ac.in`;
+    const resRegB = await fetch(`${BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Student Beta',
+        email: emailBeta,
+        password: 'password123',
+        department: 'Department of Electronics',
+      }),
+    });
+    const bodyRegB = (await resRegB.json()) as any;
+    const tokenB = bodyRegB.data?.token;
+    const userB = bodyRegB.data?.user;
+
+    // Register Student Gamma (Zero Complaints)
+    const emailGamma = `student.gamma.${Date.now()}.${Math.floor(Math.random() * 10000)}@demo.pup.ac.in`;
+    const resRegC = await fetch(`${BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Student Gamma',
+        email: emailGamma,
+        password: 'password123',
+        department: 'Department of Punjabi',
+      }),
+    });
+    const bodyRegC = (await resRegC.json()) as any;
+    const tokenC = bodyRegC.data?.token;
+    const userC = bodyRegC.data?.user;
+
+    // Student Alpha creates Complaint Alpha
+    let complaintIdAlpha = '';
+    {
+      const res = await fetch(`${BASE_URL}/complaints`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokenA}`,
+        },
+        body: JSON.stringify({
+          title: 'Student Alpha Broken Light Switch',
+          description: 'Switchboard sparks in room 101',
+          category: 'Electricity',
+          location: 'Hostel A',
+          priority: 'High',
+        }),
+      });
+      const body = (await res.json()) as any;
+      complaintIdAlpha = body.data?.id;
+    }
+
+    // Student Beta creates Complaint Beta
+    let complaintIdBeta = '';
+    {
+      const res = await fetch(`${BASE_URL}/complaints`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokenB}`,
+        },
+        body: JSON.stringify({
+          title: 'Student Beta Water Faucet Leaking',
+          description: 'Faucet leaking in room 202',
+          category: 'Water',
+          location: 'Hostel B',
+          priority: 'Medium',
+        }),
+      });
+      const body = (await res.json()) as any;
+      complaintIdBeta = body.data?.id;
+    }
+
+    // Test 30: Student Alpha sees own notification
+    let notifAlphaId = '';
+    {
+      const res = await fetch(`${BASE_URL}/notifications`, {
+        headers: { Authorization: `Bearer ${tokenA}` },
+      });
+      const body = (await res.json()) as any;
+      const notifs: any[] = body.data || [];
+      const hasAlphaComplaintNotif = notifs.some(
+        (n) => n.complaintId === complaintIdAlpha
+      );
+      if (notifs.length > 0) {
+        notifAlphaId = notifs[0].id;
+      }
+      const passed =
+        res.status === 200 &&
+        body.success === true &&
+        hasAlphaComplaintNotif &&
+        notifs.every((n) => n.complaintId === complaintIdAlpha);
+
+      results.push({
+        name: 'Notification Isolation: Student A sees only notifications for their own complaints',
+        passed,
+        status: res.status,
+        details: `Student A (${userA?.email}) received ${notifs.length} notification(s), all matching complaint #${complaintIdAlpha}`,
+      });
+    }
+
+    // Test 31: Student Alpha CANNOT see Student Beta's notification (and vice versa)
+    let notifBetaId = '';
+    {
+      const resA = await fetch(`${BASE_URL}/notifications`, {
+        headers: { Authorization: `Bearer ${tokenA}` },
+      });
+      const bodyA = (await resA.json()) as any;
+      const notifsA: any[] = bodyA.data || [];
+      const studentASeesBeta = notifsA.some(
+        (n) => n.complaintId === complaintIdBeta
+      );
+
+      const resB = await fetch(`${BASE_URL}/notifications`, {
+        headers: { Authorization: `Bearer ${tokenB}` },
+      });
+      const bodyB = (await resB.json()) as any;
+      const notifsB: any[] = bodyB.data || [];
+      const studentBSeesAlpha = notifsB.some(
+        (n) => n.complaintId === complaintIdAlpha
+      );
+      if (notifsB.length > 0) {
+        notifBetaId = notifsB[0].id;
+      }
+
+      const passed =
+        resA.status === 200 &&
+        resB.status === 200 &&
+        !studentASeesBeta &&
+        !studentBSeesAlpha;
+
+      results.push({
+        name: 'Notification Isolation: Cross-student data isolation boundary enforced',
+        passed,
+        status: 200,
+        details: `Student A seeing Beta: ${studentASeesBeta} | Student B seeing Alpha: ${studentBSeesAlpha} (both must be false)`,
+      });
+    }
+
+    // Test 32: Unread count is isolated
+    {
+      const resA = await fetch(`${BASE_URL}/notifications`, {
+        headers: { Authorization: `Bearer ${tokenA}` },
+      });
+      const bodyA = (await resA.json()) as any;
+      const unreadCountA = (bodyA.data || []).filter((n: any) => !n.read).length;
+
+      const resB = await fetch(`${BASE_URL}/notifications`, {
+        headers: { Authorization: `Bearer ${tokenB}` },
+      });
+      const bodyB = (await resB.json()) as any;
+      const unreadCountB = (bodyB.data || []).filter((n: any) => !n.read).length;
+
+      const passed =
+        resA.status === 200 &&
+        resB.status === 200 &&
+        unreadCountA === 1 &&
+        unreadCountB === 1;
+
+      results.push({
+        name: 'Notification Isolation: Unread count is strictly ownership-isolated',
+        passed,
+        status: 200,
+        details: `Student A unread: ${unreadCountA} | Student B unread: ${unreadCountB} (independent counts)`,
+      });
+    }
+
+    // Test 33: Student A CANNOT mark Student B's notification as read (Expected 403 Forbidden)
+    if (notifBetaId) {
+      const res = await fetch(`${BASE_URL}/notifications/${notifBetaId}/read`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${tokenA}` },
+      });
+      const body = (await res.json()) as any;
+      const passed = res.status === 403 && body.success === false;
+
+      // Verify Student B's notification is still unread
+      const verifyRes = await fetch(`${BASE_URL}/notifications`, {
+        headers: { Authorization: `Bearer ${tokenB}` },
+      });
+      const verifyBody = (await verifyRes.json()) as any;
+      const notifB = (verifyBody.data || []).find((n: any) => n.id === notifBetaId);
+      const isStillUnread = notifB && notifB.read === false;
+
+      results.push({
+        name: 'Negative RBAC: Student A cannot mark Student B notification as read (Expected 403 Forbidden)',
+        passed: passed && Boolean(isStillUnread),
+        status: res.status,
+        details: `Status: ${res.status} ("${body.error}") | Student B notification still unread: ${isStillUnread}`,
+      });
+    }
+
+    // Test 34: Student with no complaints receives empty list & unread 0
+    {
+      const res = await fetch(`${BASE_URL}/notifications`, {
+        headers: { Authorization: `Bearer ${tokenC}` },
+      });
+      const body = (await res.json()) as any;
+      const passed =
+        res.status === 200 &&
+        body.success === true &&
+        Array.isArray(body.data) &&
+        body.data.length === 0;
+
+      results.push({
+        name: 'Notification Isolation: Student with no complaints receives [] and unreadCount=0',
+        passed,
+        status: res.status,
+        details: `Total notifications for Student C: ${body.data?.length}`,
+      });
+    }
+
+    // Test 35: Admin can view all notifications
+    {
+      const res = await fetch(`${BASE_URL}/notifications`, {
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      const body = (await res.json()) as any;
+      const passed =
+        res.status === 200 &&
+        body.success === true &&
+        Array.isArray(body.data) &&
+        body.data.length > 0;
+
+      results.push({
+        name: 'Admin Notification Access: Admin can view system notifications',
+        passed,
+        status: res.status,
+        details: `Total notifications accessible by Admin: ${body.data?.length}`,
+      });
+    }
+
+    // Test 36: Multi-Complaint & Broadcast Noise Regression Test
+    // Scenario: Student D owns 3 complaints (D1, D2, D3).
+    // Database contains many other notifications (broadcast userId='all', other students' complaints).
+    // Student D GET /notifications MUST return strictly notifications for D1, D2, D3.
+    {
+      const emailDelta = `student.delta.${Date.now()}.${Math.floor(Math.random() * 10000)}@demo.pup.ac.in`;
+      const resRegD = await fetch(`${BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Student Delta',
+          email: emailDelta,
+          password: 'password123',
+          department: 'Department of Computer Science & Engineering',
+        }),
+      });
+      const bodyRegD = (await resRegD.json()) as any;
+      const tokenD = bodyRegD.data?.token;
+
+      // Student D creates 3 distinct complaints
+      const dComplaintIds: string[] = [];
+      for (let i = 1; i <= 3; i++) {
+        const res = await fetch(`${BASE_URL}/complaints`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${tokenD}`,
+          },
+          body: JSON.stringify({
+            title: `Student Delta Complaint ${i}`,
+            description: `Issue description ${i}`,
+            category: i === 1 ? 'Electricity' : i === 2 ? 'Water' : 'Hostel',
+            location: `Hostel D - Room ${i * 100}`,
+            priority: 'Medium',
+          }),
+        });
+        const b = (await res.json()) as any;
+        if (b.data?.id) dComplaintIds.push(b.data.id);
+      }
+
+      // Query notifications for Student D
+      const resDNotifs = await fetch(`${BASE_URL}/notifications`, {
+        headers: { Authorization: `Bearer ${tokenD}` },
+      });
+      const bodyDNotifs = (await resDNotifs.json()) as any;
+      const dNotifs: any[] = bodyDNotifs.data || [];
+
+      // Every returned notification MUST belong to one of Student D's 3 complaints
+      const allBelongToD =
+        dNotifs.length > 0 &&
+        dNotifs.every((n) => dComplaintIds.includes(n.complaintId));
+
+      // Verify no other complaints or broadcast notifications are included
+      const includesUnowned = dNotifs.some(
+        (n) => !n.complaintId || !dComplaintIds.includes(n.complaintId)
+      );
+
+      const passed =
+        resDNotifs.status === 200 &&
+        bodyDNotifs.success === true &&
+        allBelongToD &&
+        !includesUnowned &&
+        dNotifs.length >= 3;
+
+      results.push({
+        name: 'Regression Test: Student with 3 complaints receives ONLY own 3 complaint notifications amidst DB noise',
+        passed,
+        status: resDNotifs.status,
+        details: `Student Delta has 3 complaints (${dComplaintIds.join(', ')}). Received ${dNotifs.length} notifications, all strictly matching own tickets. Non-owned included: ${includesUnowned}`,
+      });
+    }
+
   } finally {
     await new Promise<void>((resolve, reject) => {
       server.close((err) => (err ? reject(err) : resolve()));

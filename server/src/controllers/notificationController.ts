@@ -9,9 +9,13 @@ export const getNotifications = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    // Strictly scope notifications to the authenticated user's ID
-    const userId = req.user?.id;
-    const notifications = await notificationService.getAll(userId);
+    const user = req.user;
+    if (!user) {
+      throw new AppError('Authentication required.', 401);
+    }
+
+    // Strictly scope notifications to complaints owned by the authenticated student
+    const notifications = await notificationService.getAll(user);
 
     const response: ApiResponse<Notification[]> = {
       success: true,
@@ -35,18 +39,31 @@ export const markNotificationRead = async (
     const id = String(req.params.id || '');
     if (!id) throw new AppError('Notification ID is required.', 400);
 
-    const ok = await notificationService.markAsRead(id);
+    const user = req.user;
+    if (!user) throw new AppError('Authentication required.', 401);
+
+    const result = await notificationService.markAsRead(id, user);
+
+    if (result.notFound) {
+      throw new AppError(`Notification with ID '${id}' was not found.`, 404);
+    }
+
+    if (result.unauthorized) {
+      throw new AppError('Access denied: You can only update your own notifications.', 403);
+    }
+
+    if (!result.success) {
+      throw new AppError(`Failed to update notification '${id}'.`, 500);
+    }
 
     const response: ApiResponse<{ id: string; read: boolean }> = {
-      success: ok,
-      message: ok
-        ? `Notification ${id} marked as read.`
-        : `Notification ${id} not found or already read.`,
+      success: true,
+      message: `Notification ${id} marked as read.`,
       data: { id, read: true },
       timestamp: new Date().toISOString(),
     };
 
-    res.status(ok ? 200 : 404).json(response);
+    res.status(200).json(response);
   } catch (error) {
     next(error);
   }
@@ -58,17 +75,17 @@ export const markAllNotificationsRead = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = req.user?.id;
-    if (!userId) throw new AppError('Authentication required.', 401);
+    const user = req.user;
+    if (!user) throw new AppError('Authentication required.', 401);
 
-    const ok = await notificationService.markAllAsRead(userId);
+    const ok = await notificationService.markAllAsRead(user);
 
     const response: ApiResponse<{ userId: string }> = {
       success: ok,
       message: ok
         ? 'All notifications marked as read.'
         : 'Some notifications could not be updated.',
-      data: { userId },
+      data: { userId: user.id },
       timestamp: new Date().toISOString(),
     };
 

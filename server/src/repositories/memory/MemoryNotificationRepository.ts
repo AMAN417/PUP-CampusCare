@@ -2,21 +2,85 @@ import {
   INotificationRepository,
   CreateNotificationDto,
 } from '../interfaces.js';
-import { Notification } from '../../types/index.js';
+import { Notification, User } from '../../types/index.js';
 import { INITIAL_NOTIFICATIONS } from '../../data/initialData.js';
+import { getComplaintRepository } from '../index.js';
+import { isStudentComplaintOwner } from '../../utils/ownership.js';
 
 export class MemoryNotificationRepository implements INotificationRepository {
   private notifications: Notification[] = JSON.parse(JSON.stringify(INITIAL_NOTIFICATIONS));
 
-  public async getAll(userId?: string): Promise<Notification[]> {
-    if (!userId || userId === 'all') {
+  public async getById(id: string): Promise<Notification | null> {
+    const notif = this.notifications.find((n) => n.id === id);
+    if (!notif) return null;
+    return JSON.parse(JSON.stringify(notif));
+  }
+
+  public async getAll(userOrId?: User | string): Promise<Notification[]> {
+    if (!userOrId || userOrId === 'all') {
       return [...this.notifications].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
     }
 
+    if (typeof userOrId === 'object' && userOrId !== null) {
+      if (userOrId.role === 'admin') {
+        return [...this.notifications].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
+
+      // For students: strictly return ONLY notifications associated with their own complaints
+      if (userOrId.role === 'student') {
+        const complaintRepo = getComplaintRepository();
+        const allComplaints = await complaintRepo.getAll();
+        const ownedComplaints = allComplaints.filter((c) =>
+          isStudentComplaintOwner(c, userOrId)
+        );
+
+        if (ownedComplaints.length === 0) {
+          return [];
+        }
+
+        const ownedComplaintIds = new Set(
+          ownedComplaints.map((c) => c.id.trim().toUpperCase())
+        );
+
+        return this.notifications
+          .filter(
+            (n) =>
+              Boolean(n.complaintId) &&
+              ownedComplaintIds.has(String(n.complaintId).trim().toUpperCase())
+          )
+          .sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+      }
+    }
+
+    // If string userId is passed
+    const complaintRepo = getComplaintRepository();
+    const allComplaints = await complaintRepo.getAll();
+    const ownedComplaints = allComplaints.filter(
+      (c) =>
+        c.studentId === userOrId ||
+        (userOrId === 'user-student-1' && c.studentId === 'user-student-1')
+    );
+
+    if (ownedComplaints.length === 0) {
+      return [];
+    }
+
+    const ownedComplaintIds = new Set(
+      ownedComplaints.map((c) => c.id.trim().toUpperCase())
+    );
+
     return this.notifications
-      .filter((n) => n.userId === 'all' || n.userId === userId)
+      .filter(
+        (n) =>
+          Boolean(n.complaintId) &&
+          ownedComplaintIds.has(String(n.complaintId).trim().toUpperCase())
+      )
       .sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );

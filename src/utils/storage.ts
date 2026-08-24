@@ -329,8 +329,22 @@ export const storage = {
   // Notification operations
   getNotifications: (userId?: string): Notification[] => {
     const notifs = getFromStorage<Notification[]>(STORAGE_KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS);
-    if (!userId) return notifs;
-    return notifs.filter((n) => n.userId === userId || n.userId === 'all');
+    if (!userId || userId === 'all' || userId === 'user-admin-1') return notifs;
+
+    // Isolate by student's owned complaints
+    const complaints = storage.getComplaints();
+    const studentComplaints = complaints.filter(
+      (c) =>
+        c.studentId === userId ||
+        (userId === 'user-student-1' &&
+          (c.studentId === 'user-student-1' || c.studentName === 'Harmanpreet Singh'))
+    );
+
+    if (studentComplaints.length === 0) return [];
+    const ownedIds = new Set(studentComplaints.map((c) => c.id.toUpperCase()));
+    return notifs.filter(
+      (n) => n.complaintId && ownedIds.has(n.complaintId.toUpperCase())
+    );
   },
 
   addNotification: (notification: Notification): void => {
@@ -340,7 +354,7 @@ export const storage = {
   },
 
   markNotificationAsRead: (id: string): void => {
-    const notifs = storage.getNotifications();
+    const notifs = getFromStorage<Notification[]>(STORAGE_KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS);
     const index = notifs.findIndex((n) => n.id === id);
     if (index >= 0) {
       notifs[index].read = true;
@@ -349,9 +363,24 @@ export const storage = {
   },
 
   markAllNotificationsAsRead: (userId?: string): void => {
-    const notifs = storage.getNotifications();
+    const notifs = getFromStorage<Notification[]>(STORAGE_KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS);
+    if (!userId || userId === 'all' || userId === 'user-admin-1') {
+      const updated = notifs.map((n) => ({ ...n, read: true }));
+      saveToStorage(STORAGE_KEYS.NOTIFICATIONS, updated);
+      return;
+    }
+
+    const complaints = storage.getComplaints();
+    const studentComplaints = complaints.filter(
+      (c) =>
+        c.studentId === userId ||
+        (userId === 'user-student-1' &&
+          (c.studentId === 'user-student-1' || c.studentName === 'Harmanpreet Singh'))
+    );
+    const ownedIds = new Set(studentComplaints.map((c) => c.id.toUpperCase()));
+
     const updated = notifs.map((n) => {
-      if (!userId || n.userId === userId || n.userId === 'all') {
+      if (n.complaintId && ownedIds.has(n.complaintId.toUpperCase())) {
         return { ...n, read: true };
       }
       return n;

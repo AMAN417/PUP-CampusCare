@@ -28,6 +28,7 @@ export interface ResetPasswordInput {
 // Memory mode token store (isolated fallback for testing & non-database local run)
 const memoryTokenStore = new Map<string, { user: User; expiresAt: number }>();
 const memoryResetTokenStore = new Map<string, { email: string; expiresAt: number }>();
+const memoryPasswordStore = new Map<string, string>();
 
 const createMemoryToken = (user: User): string => {
   const token = `cc_token_${user.id}_${Date.now()}_${Math.random().toString(36).substring(2)}`;
@@ -155,6 +156,7 @@ export class AuthService {
     });
 
     // Issue a token immediately — no verification gate in memory mode either
+    memoryPasswordStore.set(email, input.password);
     const token = createMemoryToken(newUser);
     return {
       user: newUser,
@@ -269,6 +271,11 @@ export class AuthService {
     const userRepo = getUserRepository();
     const user = await userRepo.getByEmail(email);
     if (!user) {
+      throw new AppError('Invalid email or password.', 401);
+    }
+
+    const storedPassword = memoryPasswordStore.get(email) || 'password123';
+    if (input.password !== storedPassword) {
       throw new AppError('Invalid email or password.', 401);
     }
 
@@ -401,6 +408,7 @@ export class AuthService {
         throw new AppError('Password reset link has expired. Please request a new one.', 401);
       }
       memoryResetTokenStore.delete(cleanToken);
+      memoryPasswordStore.set(entry.email, password);
       return { updated: true };
     }
 
@@ -410,6 +418,7 @@ export class AuthService {
         memoryTokenStore.delete(cleanToken);
         throw new AppError('Session has expired.', 401);
       }
+      memoryPasswordStore.set(entry.user.email, password);
       return { updated: true };
     }
 

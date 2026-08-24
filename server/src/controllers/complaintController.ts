@@ -11,18 +11,7 @@ import {
 import type { PatchComplaintDto } from '../repositories/interfaces.js';
 import { AppError } from '../middleware/errorHandler.js';
 
-// Helper to check if a complaint belongs to the authenticated student
-const isStudentComplaintOwner = (complaint: Complaint, user: any): boolean => {
-  if (complaint.studentId === user.id) return true;
-  // Handle seed demo student match
-  if (
-    user.email === 'harman.student@demo.pup.ac.in' &&
-    (complaint.studentId === 'user-student-1' || complaint.studentName === user.name)
-  ) {
-    return true;
-  }
-  return false;
-};
+import { isStudentComplaintOwner } from '../utils/ownership.js';
 
 export const getComplaints = async (
   req: Request,

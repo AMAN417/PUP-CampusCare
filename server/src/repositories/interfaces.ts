@@ -90,7 +90,8 @@ export interface IComplaintRepository {
 }
 
 export interface INotificationRepository {
-  getAll(userId?: string): Promise<Notification[]>;
+  getAll(userOrId?: User | string): Promise<Notification[]>;
+  getById(id: string): Promise<Notification | null>;
   create(data: CreateNotificationDto): Promise<Notification>;
   markAsRead(id: string): Promise<boolean>;
 }

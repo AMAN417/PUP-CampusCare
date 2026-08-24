@@ -539,7 +539,7 @@ export const INITIAL_NOTIFICATIONS: Notification[] = [
   },
   {
     id: 'notif-3',
-    userId: 'user-student-1',
+    userId: 'user-student-2',
     title: 'Officer Assigned',
     message: 'Er. Manpreet Kaur has been assigned to investigate your projector issue PUP-2026-0102.',
     type: 'assignment',
