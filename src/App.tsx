@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ComplaintProvider } from './context/ComplaintContext';
 import { ToastProvider } from './context/ToastContext';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
+import { Button } from './components/common/Button';
 
 // Public Pages
 import { LandingPage } from './pages/public/LandingPage';
@@ -29,7 +31,7 @@ import { AnalyticsPage } from './pages/admin/AnalyticsPage';
 import { UserManagement } from './pages/admin/UserManagement';
 
 import { ShieldAlert } from 'lucide-react';
-import type { ComplaintCategory, ComplaintStatus } from './types';
+import type { ComplaintCategory, ComplaintStatus, Priority } from './types';
 
 const MainApp: React.FC = () => {
   const { user, isAuthenticated, loading } = useAuth();
@@ -96,7 +98,8 @@ const MainApp: React.FC = () => {
             justifyContent: 'center',
             background: 'var(--bg-main)',
             color: 'var(--pup-maroon)',
-            fontWeight: 600,
+            fontWeight: 700,
+            fontFamily: 'var(--font-heading)',
           }}
         >
           Loading PUP CampusCare...
@@ -114,7 +117,14 @@ const MainApp: React.FC = () => {
         <div className="app-container">
           <Navbar currentPath={currentPath} onNavigate={navigate} />
           <main className="page-wrapper">
-            <LandingPage onNavigate={navigate} />
+            <motion.div
+              key="landing"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.28, ease: 'easeOut' }}
+            >
+              <LandingPage onNavigate={navigate} />
+            </motion.div>
           </main>
           <Footer onNavigate={navigate} />
         </div>
@@ -126,7 +136,14 @@ const MainApp: React.FC = () => {
         <div className="app-container">
           <Navbar currentPath={currentPath} onNavigate={navigate} />
           <main className="page-wrapper">
-            <LoginPage onNavigate={navigate} />
+            <motion.div
+              key="login"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.28, ease: 'easeOut' }}
+            >
+              <LoginPage onNavigate={navigate} />
+            </motion.div>
           </main>
           <Footer onNavigate={navigate} />
         </div>
@@ -138,7 +155,14 @@ const MainApp: React.FC = () => {
         <div className="app-container">
           <Navbar currentPath={currentPath} onNavigate={navigate} />
           <main className="page-wrapper">
-            <RegisterPage onNavigate={navigate} />
+            <motion.div
+              key="register"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.28, ease: 'easeOut' }}
+            >
+              <RegisterPage onNavigate={navigate} />
+            </motion.div>
           </main>
           <Footer onNavigate={navigate} />
         </div>
@@ -150,7 +174,14 @@ const MainApp: React.FC = () => {
         <div className="app-container">
           <Navbar currentPath={currentPath} onNavigate={navigate} />
           <main className="page-wrapper">
-            <ForgotPasswordPage onNavigate={navigate} />
+            <motion.div
+              key="forgot-password"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.28, ease: 'easeOut' }}
+            >
+              <ForgotPasswordPage onNavigate={navigate} />
+            </motion.div>
           </main>
           <Footer onNavigate={navigate} />
         </div>
@@ -162,7 +193,14 @@ const MainApp: React.FC = () => {
         <div className="app-container">
           <Navbar currentPath={currentPath} onNavigate={navigate} />
           <main className="page-wrapper">
-            <ResetPasswordPage onNavigate={navigate} />
+            <motion.div
+              key="reset-password"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.28, ease: 'easeOut' }}
+            >
+              <ResetPasswordPage onNavigate={navigate} />
+            </motion.div>
           </main>
           <Footer onNavigate={navigate} />
         </div>
@@ -176,7 +214,14 @@ const MainApp: React.FC = () => {
           <div className="app-container">
             <Navbar currentPath={currentPath} onNavigate={navigate} />
             <main className="page-wrapper">
-              <LoginPage onNavigate={navigate} />
+              <motion.div
+                key="login-redirect"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.28, ease: 'easeOut' }}
+              >
+                <LoginPage onNavigate={navigate} />
+              </motion.div>
             </main>
             <Footer onNavigate={navigate} />
           </div>
@@ -242,7 +287,14 @@ const MainApp: React.FC = () => {
           <div className="app-container">
             <Navbar currentPath={currentPath} onNavigate={navigate} />
             <main className="page-wrapper">
-              <LoginPage onNavigate={navigate} />
+              <motion.div
+                key="admin-login-redirect"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.28, ease: 'easeOut' }}
+              >
+                <LoginPage onNavigate={navigate} />
+              </motion.div>
             </main>
             <Footer onNavigate={navigate} />
           </div>
@@ -283,14 +335,13 @@ const MainApp: React.FC = () => {
                 <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '1.5rem' }}>
                   Administrator privileges are required to view this area. You do not have permission to access administrative consoles.
                 </p>
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
                   onClick={() => navigate('/student/dashboard')}
-                  className="btn btn-primary"
                   style={{ width: '100%' }}
                 >
                   Return to Student Dashboard
-                </button>
+                </Button>
               </div>
             </div>
           </DashboardLayout>
@@ -307,9 +358,14 @@ const MainApp: React.FC = () => {
 
       if (pathPart === '/admin/complaints') {
         const statusParam = queryParams.get('status') as ComplaintStatus | 'ALL' | null;
+        const priorityParam = queryParams.get('priority') as Priority | 'ALL' | null;
         return (
           <DashboardLayout currentPath={pathPart} onNavigate={navigate}>
-            <ComplaintsManagement onNavigate={navigate} initialStatus={statusParam || 'ALL'} />
+            <ComplaintsManagement
+              onNavigate={navigate}
+              initialStatus={statusParam || 'ALL'}
+              initialPriority={priorityParam || 'ALL'}
+            />
           </DashboardLayout>
         );
       }
@@ -345,7 +401,14 @@ const MainApp: React.FC = () => {
       <div className="app-container">
         <Navbar currentPath={currentPath} onNavigate={navigate} />
         <main className="page-wrapper">
-          <LandingPage onNavigate={navigate} />
+          <motion.div
+            key="landing-fallback"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.28, ease: 'easeOut' }}
+          >
+            <LandingPage onNavigate={navigate} />
+          </motion.div>
         </main>
         <Footer onNavigate={navigate} />
       </div>

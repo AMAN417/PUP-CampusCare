@@ -197,4 +197,26 @@ export class SupabaseNotificationRepository implements INotificationRepository {
 
     return !error;
   }
+
+  public async deleteByComplaint(complaintIds: string[]): Promise<boolean> {
+    const identifiers = (complaintIds || [])
+      .filter((id) => typeof id === 'string' && id.trim().length > 0)
+      .map((id) => id.trim());
+
+    if (identifiers.length === 0) return true;
+
+    const supabase = getSupabaseClient();
+    // Notifications may reference either the human-readable complaint_id
+    // (PUP-2026-XXXX) or the underlying UUID, so match all provided forms.
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .in('complaint_id', identifiers);
+
+    if (error) {
+      throw new Error(`Failed to delete notifications for complaint: ${error.message}`);
+    }
+
+    return true;
+  }
 }

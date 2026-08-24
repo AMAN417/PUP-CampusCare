@@ -94,6 +94,12 @@ export interface INotificationRepository {
   getById(id: string): Promise<Notification | null>;
   create(data: CreateNotificationDto): Promise<Notification>;
   markAsRead(id: string): Promise<boolean>;
+  /**
+   * Delete every notification tied to the given complaint identifier(s).
+   * Notifications reference complaints by plain-text complaint_id with no
+   * foreign key, so cleanup must happen explicitly when a complaint is deleted.
+   */
+  deleteByComplaint(complaintIds: string[]): Promise<boolean>;
 }
 
 export interface IUserRepository {

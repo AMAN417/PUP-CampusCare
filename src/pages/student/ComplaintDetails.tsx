@@ -195,7 +195,7 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
   };
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+    <div style={{ maxWidth: '1020px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       {/* Top Breadcrumb & Actions */}
       <div
         style={{
@@ -213,28 +213,31 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.4rem',
-            padding: '6px 10px',
-            borderRadius: 'var(--radius-md)',
+            gap: '0.45rem',
+            padding: '8px 14px',
+            borderRadius: 'var(--radius-lg)',
             border: 'none',
+            background: 'var(--clay-btn-outline-bg)',
+            boxShadow: '0 2px 5px rgba(15, 23, 42, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.9)',
             color: 'var(--text-secondary)',
-            fontWeight: 600,
+            fontWeight: 700,
             fontSize: '0.875rem',
             cursor: 'pointer',
+            transition: 'all var(--transition-fast)',
           }}
         >
           <ArrowLeft size={16} />
           <span>Back to My Complaints</span>
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           {complaint.status === 'Resolved' && (
             <Button
               variant="primary"
               size="sm"
               isLoading={isClosing}
               onClick={handleCloseComplaint}
-              leftIcon={<CheckCircle2 size={15} />}
+              leftIcon={<CheckCircle2 size={16} />}
             >
               Confirm & Close Complaint
             </Button>
@@ -265,10 +268,10 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
           <div
             style={{
               display: 'flex',
-              background: 'var(--bg-main)',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-light)',
-              padding: '2px',
+              background: 'var(--clay-inset-bg)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--clay-inset-shadow)',
+              padding: '3px',
             }}
           >
             <button
@@ -277,12 +280,14 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
               style={{
                 border: 'none',
                 background: timelineMode === 'horizontal' ? '#FFFFFF' : 'transparent',
-                borderRadius: 'var(--radius-sm)',
-                padding: '4px 8px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
+                borderRadius: 'var(--radius-md)',
+                boxShadow: timelineMode === 'horizontal' ? '0 2px 5px rgba(15, 23, 42, 0.08)' : 'none',
+                padding: '5px 10px',
+                fontSize: '0.775rem',
+                fontWeight: 700,
                 color: timelineMode === 'horizontal' ? 'var(--pup-maroon)' : 'var(--text-muted)',
                 cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
               }}
             >
               Step View
@@ -293,12 +298,14 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
               style={{
                 border: 'none',
                 background: timelineMode === 'vertical' ? '#FFFFFF' : 'transparent',
-                borderRadius: 'var(--radius-sm)',
-                padding: '4px 8px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
+                borderRadius: 'var(--radius-md)',
+                boxShadow: timelineMode === 'vertical' ? '0 2px 5px rgba(15, 23, 42, 0.08)' : 'none',
+                padding: '5px 10px',
+                fontSize: '0.775rem',
+                fontWeight: 700,
                 color: timelineMode === 'vertical' ? 'var(--pup-maroon)' : 'var(--text-muted)',
                 cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
               }}
             >
               Detailed Log
@@ -308,15 +315,15 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
       </div>
 
       {/* Main Complaint Header Card */}
-      <Card style={{ padding: '1.75rem', borderTop: `4px solid ${catMeta.color}` }}>
+      <Card style={{ padding: '2rem 2.25rem', borderLeft: `6px solid ${catMeta.color}` }}>
         <div
           style={{
             display: 'flex',
             flexWrap: 'wrap',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '0.75rem',
-            marginBottom: '1rem',
+            gap: '0.85rem',
+            marginBottom: '1.25rem',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -327,9 +334,10 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
                 fontWeight: 800,
                 color: 'var(--pup-maroon)',
                 background: 'var(--pup-maroon-subtle)',
-                padding: '3px 10px',
+                padding: '4px 12px',
                 borderRadius: 'var(--radius-md)',
-                border: '1px solid rgba(122, 18, 40, 0.2)',
+                border: '1px solid rgba(122, 18, 40, 0.15)',
+                boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.9)',
               }}
             >
               {complaint.id}
@@ -337,12 +345,13 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
 
             <span
               style={{
-                fontSize: '0.8125rem',
-                fontWeight: 700,
+                fontSize: '0.825rem',
+                fontWeight: 800,
                 color: catMeta.color,
                 background: `${catMeta.color}15`,
-                padding: '3px 10px',
+                padding: '4px 12px',
                 borderRadius: 'var(--radius-full)',
+                boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.9)',
               }}
             >
               {complaint.category}
@@ -354,7 +363,7 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
           <StatusBadge status={complaint.status} />
         </div>
 
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.75rem', lineHeight: 1.3 }}>
+        <h1 style={{ fontSize: '1.65rem', fontWeight: 900, marginBottom: '0.85rem', lineHeight: 1.3, letterSpacing: '-0.02em' }}>
           {complaint.title}
         </h1>
 
@@ -362,26 +371,26 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
           style={{
             display: 'flex',
             flexWrap: 'wrap',
-            gap: '1.5rem',
-            fontSize: '0.8125rem',
+            gap: '1.75rem',
+            fontSize: '0.825rem',
             color: 'var(--text-muted)',
-            paddingTop: '0.75rem',
-            borderTop: '1px solid var(--border-subtle)',
+            paddingTop: '1rem',
+            borderTop: '1px solid rgba(241, 245, 249, 0.85)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontWeight: 500 }}>
             <MapPin size={15} style={{ color: 'var(--pup-maroon)' }} />
             <strong style={{ color: 'var(--text-primary)' }}>Location:</strong>
             <span>{complaint.location}</span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontWeight: 500 }}>
             <Calendar size={15} />
             <strong>Reported:</strong>
             <span>{new Date(complaint.createdAt).toLocaleString()}</span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontWeight: 500 }}>
             <Clock size={15} />
             <strong>Last Updated:</strong>
             <span>{new Date(complaint.updatedAt).toLocaleString()}</span>
@@ -390,8 +399,8 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
       </Card>
 
       {/* 2. ANIMATED COMPLAINT TIMELINE SECTION */}
-      <Card style={{ padding: '1.75rem' }}>
-        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem' }}>
+      <Card style={{ padding: '2rem 2.25rem' }}>
+        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '1.5rem', letterSpacing: '-0.015em' }}>
           Resolution Lifecycle Progress
         </h3>
         <Timeline
@@ -405,21 +414,21 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-          gap: '1.5rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+          gap: '1.75rem',
         }}
       >
         {/* Left Column: Full Description & Photos */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <Card style={{ padding: '1.5rem' }}>
-            <h4 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '0.75rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+          <Card style={{ padding: '1.75rem' }}>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.85rem', letterSpacing: '-0.01em' }}>
               Issue Description
             </h4>
             <p
               style={{
-                fontSize: '0.9375rem',
+                fontSize: '0.925rem',
                 color: 'var(--text-secondary)',
-                lineHeight: 1.6,
+                lineHeight: 1.65,
                 whiteSpace: 'pre-line',
                 margin: 0,
               }}
@@ -430,17 +439,17 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
 
           {/* Photo Attachments */}
           {complaint.attachments.length > 0 && (
-            <Card style={{ padding: '1.5rem' }}>
+            <Card style={{ padding: '1.75rem' }}>
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.4rem',
-                  marginBottom: '1rem',
+                  gap: '0.5rem',
+                  marginBottom: '1.15rem',
                 }}
               >
-                <Paperclip size={16} style={{ color: 'var(--pup-maroon)' }} />
-                <h4 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0 }}>
+                <Paperclip size={18} style={{ color: 'var(--pup-maroon)' }} />
+                <h4 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, letterSpacing: '-0.01em' }}>
                   Attachments & Photos ({complaint.attachments.length})
                 </h4>
               </div>
@@ -449,7 +458,7 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-                  gap: '0.75rem',
+                  gap: '0.85rem',
                 }}
               >
                 {complaint.attachments.map((att) => (
@@ -457,24 +466,26 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
                     key={att.id}
                     onClick={() => setPreviewImage(att.url)}
                     style={{
-                      border: '1px solid var(--border-light)',
-                      borderRadius: 'var(--radius-md)',
+                      border: 'var(--clay-card-border)',
+                      borderRadius: 'var(--radius-lg)',
                       overflow: 'hidden',
                       cursor: 'pointer',
                       position: 'relative',
-                      background: 'var(--bg-main)',
+                      background: 'var(--clay-card-bg)',
+                      boxShadow: 'var(--clay-card-shadow)',
+                      transition: 'transform var(--transition-fast)',
                     }}
                   >
                     <img
                       src={att.url}
                       alt={att.name}
-                      style={{ width: '100%', height: '100px', objectFit: 'cover' }}
+                      style={{ width: '100%', height: '110px', objectFit: 'cover' }}
                     />
                     <div
                       style={{
-                        padding: '4px 6px',
-                        fontSize: '0.7rem',
-                        fontWeight: 600,
+                        padding: '6px 8px',
+                        fontSize: '0.725rem',
+                        fontWeight: 700,
                         color: 'var(--text-primary)',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
@@ -491,21 +502,47 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
         </div>
 
         {/* Right Column: Assigned Division & Comments */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
           {/* Assignment Box */}
-          <Card style={{ padding: '1.5rem', background: 'var(--bg-surface-subtle)' }}>
-            <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--pup-navy)' }}>
+          <Card style={{ padding: '1.75rem', background: 'var(--clay-card-bg)' }}>
+            <h4 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '0.85rem', color: 'var(--pup-navy)', letterSpacing: '-0.01em' }}>
               Assigned Maintenance Desk
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.85rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Building size={16} style={{ color: 'var(--pup-maroon)' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <div
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: 'var(--radius-md)',
+                    background: 'var(--pup-maroon-subtle)',
+                    color: 'var(--pup-maroon)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Building size={16} />
+                </div>
                 <span>
                   <strong>Department:</strong> {complaint.assignedDepartment || 'Pending Triage'}
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <User size={16} style={{ color: 'var(--pup-maroon)' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <div
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: 'var(--radius-md)',
+                    background: 'var(--pup-gold-subtle)',
+                    color: 'var(--pup-gold)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <User size={16} />
+                </div>
                 <span>
                   <strong>Lead Officer:</strong> {complaint.assignedTo || 'Assigning soon...'}
                 </span>
@@ -514,7 +551,7 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
           </Card>
 
           {/* Comment & Activity Section */}
-          <Card style={{ padding: '1.5rem' }}>
+          <Card style={{ padding: '1.75rem' }}>
             <CommentSection
               complaintId={complaint.id}
               comments={complaint.comments}
@@ -539,8 +576,9 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
               style={{
                 maxWidth: '100%',
                 maxHeight: '70vh',
-                borderRadius: 'var(--radius-md)',
+                borderRadius: 'var(--radius-lg)',
                 objectFit: 'contain',
+                boxShadow: 'var(--clay-card-shadow)',
               }}
             />
           </div>
@@ -714,19 +752,20 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({
         <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
           <div
             style={{
-              width: '56px',
-              height: '56px',
+              width: '60px',
+              height: '60px',
               borderRadius: '50%',
               background: '#FEF2F2',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 1rem auto',
+              margin: '0 auto 1.25rem auto',
+              boxShadow: '0 4px 12px rgba(220, 38, 38, 0.15)',
             }}
           >
-            <Trash2 size={28} style={{ color: '#DC2626' }} />
+            <Trash2 size={30} style={{ color: '#DC2626' }} />
           </div>
-          <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+          <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
             Are you sure you want to permanently delete complaint{' '}
             <strong style={{ color: 'var(--pup-maroon)', fontFamily: 'monospace' }}>
               {complaint.id}

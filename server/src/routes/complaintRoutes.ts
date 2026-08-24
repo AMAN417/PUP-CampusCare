@@ -42,17 +42,23 @@ router.patch(
   patchComplaint
 );
 
-// DELETE /api/campuscare/complaints/:id - Delete complaint (owner student or admin)
+// DELETE /api/campuscare/complaints/:id - Delete complaint (ADMIN ONLY)
+// Defense layer 1: requireAdmin rejects students with 403 and anonymous
+// requests with 401 before the controller runs. The controller and service
+// re-verify the admin role server-side (zero-trust, no frontend flags).
 router.delete(
   '/complaints/:id',
+  requireAuth,
   validateComplaintId,
+  requireAdmin,
   deleteComplaint
 );
 
-// POST /api/campuscare/complaints/:id/status - Advance lifecycle status (Admin only)
+// POST /api/campuscare/complaints/:id/status - Advance lifecycle status
+// Admins may apply any valid transition; a student may ONLY confirm & close
+// their own Resolved complaint. Authorization enforced in controller.
 router.post(
   '/complaints/:id/status',
-  requireAdmin,
   validateComplaintId,
   validateUpdateStatus,
   updateComplaintStatus

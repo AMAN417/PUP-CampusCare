@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { PUPLogo } from '../../components/common/PUPLogo';
 import { Button } from '../../components/common/Button';
 import { User, Mail, Lock, Phone, BookOpen, Home, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import type { Gender } from '../../types';
+import { GENDER_OPTIONS } from '../../types';
 
 interface RegisterPageProps {
   onNavigate: (path: string) => void;
@@ -17,6 +20,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
     name: '',
     email: '',
     rollNo: '',
+    gender: '' as Gender | '',
     department: 'Computer Science & Engineering',
     hostel: 'Banda Singh Bahadur Hostel (Block A)',
     phone: '',
@@ -66,6 +70,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
           name: formData.name.trim(),
           email: formData.email.trim(),
           rollNo: formData.rollNo.trim() || `PUP2026-${Math.floor(1000 + Math.random() * 9000)}`,
+          gender: formData.gender || undefined,
           department: formData.department,
           hostel: formData.hostel === 'Day Scholar (No Hostel)' ? 'Day Scholar' : formData.hostel,
           phone: formData.phone.trim() || '+91 98000 00000',
@@ -85,7 +90,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
 
   return (
     <div className="auth-page-container wide">
-      <div className="auth-card-box">
+      <motion.div
+        initial={{ opacity: 0, y: 16, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        className="auth-card-box"
+      >
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{ display: 'inline-block', marginBottom: '0.75rem' }}>
             <PUPLogo size="lg" />
@@ -99,7 +109,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
         </div>
 
         {error && (
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
             style={{
               background: '#fef2f2',
               border: '1px solid #fecaca',
@@ -112,7 +124,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
             }}
           >
             {error}
-          </div>
+          </motion.div>
         )}
 
         <form onSubmit={handleSubmit}>
@@ -135,15 +147,16 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                 style={{ paddingLeft: '36px' }}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g. Navjot Singh"
+                placeholder="e.g. Gurpreet Singh"
                 required
+                disabled={submitting}
               />
             </div>
           </div>
 
           <div className="form-grid-2">
             <div className="form-group">
-              <label className="form-label">Email *</label>
+              <label className="form-label">Email Address *</label>
               <div style={{ position: 'relative' }}>
                 <Mail
                   size={16}
@@ -153,7 +166,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     top: '50%',
                     transform: 'translateY(-50%)',
                     color: 'var(--text-muted)',
-                    pointerEvents: 'none',
                   }}
                 />
                 <input
@@ -164,81 +176,55 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="name@pup.ac.in"
                   required
+                  disabled={submitting}
                 />
               </div>
             </div>
 
             <div className="form-group">
               <label className="form-label">Roll Number</label>
-              <input
-                type="text"
-                className="form-input"
-                value={formData.rollNo}
-                onChange={(e) => setFormData({ ...formData, rollNo: e.target.value })}
-                placeholder="e.g. PUP2024-CS-099"
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Department</label>
-            <div style={{ position: 'relative' }}>
-              <BookOpen
-                size={16}
-                style={{
-                  position: 'absolute',
-                  left: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--text-muted)',
-                  pointerEvents: 'none',
-                }}
-              />
-              <select
-                className="form-select"
-                style={{ paddingLeft: '36px' }}
-                value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-              >
-                {departments.map((dept) => (
-                  <option key={dept} value={dept}>
-                    {dept}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Hostel / Residence</label>
-            <div style={{ position: 'relative' }}>
-              <Home
-                size={16}
-                style={{
-                  position: 'absolute',
-                  left: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--text-muted)',
-                  pointerEvents: 'none',
-                }}
-              />
-              <select
-                className="form-select"
-                style={{ paddingLeft: '36px' }}
-                value={formData.hostel}
-                onChange={(e) => setFormData({ ...formData, hostel: e.target.value })}
-              >
-                {hostels.map((h) => (
-                  <option key={h} value={h}>
-                    {h}
-                  </option>
-                ))}
-              </select>
+              <div style={{ position: 'relative' }}>
+                <BookOpen
+                  size={16}
+                  style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--text-muted)',
+                  }}
+                />
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ paddingLeft: '36px' }}
+                  value={formData.rollNo}
+                  onChange={(e) => setFormData({ ...formData, rollNo: e.target.value })}
+                  placeholder="e.g. PUP2026-CSE-045"
+                  disabled={submitting}
+                />
+              </div>
             </div>
           </div>
 
           <div className="form-grid-2">
+            <div className="form-group">
+              <label className="form-label">Gender (Optional)</label>
+              <select
+                className="form-select"
+                value={formData.gender}
+                onChange={(e) => setFormData({ ...formData, gender: e.target.value as Gender | '' })}
+                disabled={submitting}
+              >
+                <option value="">Select Gender (Optional)</option>
+                {GENDER_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="form-group">
               <label className="form-label">Phone Number</label>
               <div style={{ position: 'relative' }}>
@@ -250,7 +236,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     top: '50%',
                     transform: 'translateY(-50%)',
                     color: 'var(--text-muted)',
-                    pointerEvents: 'none',
                   }}
                 />
                 <input
@@ -259,60 +244,107 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                   style={{ paddingLeft: '36px' }}
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+91 98765 00000"
+                  placeholder="+91 98000 00000"
+                  disabled={submitting}
                 />
               </div>
             </div>
+          </div>
 
-            <div className="form-group">
-              <label className="form-label">Password *</label>
-              <div style={{ position: 'relative' }}>
-                <Lock
-                  size={16}
-                  style={{
-                    position: 'absolute',
-                    left: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--text-muted)',
-                    pointerEvents: 'none',
-                  }}
-                />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  className="form-input"
-                  style={{ paddingLeft: '36px', paddingRight: '38px' }}
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="••••••••"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  title={showPassword ? 'Hide password' : 'Show password'}
-                  style={{
-                    position: 'absolute',
-                    right: '10px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    padding: '4px',
-                    cursor: 'pointer',
-                    color: 'var(--text-muted)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: 'var(--radius-sm)',
-                    transition: 'color var(--transition-fast)',
-                  }}
-                  disabled={submitting}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
+          <div className="form-group">
+            <label className="form-label">Department</label>
+            <select
+              className="form-select"
+              value={formData.department}
+              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+              disabled={submitting}
+            >
+              {departments.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Campus Residence / Hostel</label>
+            <div style={{ position: 'relative' }}>
+              <Home
+                size={16}
+                style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--text-muted)',
+                  zIndex: 1,
+                }}
+              />
+              <select
+                className="form-select"
+                style={{ paddingLeft: '36px' }}
+                value={formData.hostel}
+                onChange={(e) => setFormData({ ...formData, hostel: e.target.value })}
+                disabled={submitting}
+              >
+                {hostels.map((h) => (
+                  <option key={h} value={h}>
+                    {h}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Password *</label>
+            <div style={{ position: 'relative' }}>
+              <Lock
+                size={16}
+                style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--text-muted)',
+                }}
+              />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className="form-input"
+                style={{ paddingLeft: '36px', paddingRight: '38px' }}
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="At least 6 characters"
+                required
+                disabled={submitting}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  padding: '4px',
+                  cursor: 'pointer',
+                  color: 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 'var(--radius-sm)',
+                  transition: 'color var(--transition-fast)',
+                }}
+                disabled={submitting}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           </div>
 
@@ -344,7 +376,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
             Sign In
           </button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

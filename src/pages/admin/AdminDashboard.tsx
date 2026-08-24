@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useComplaints } from '../../context/ComplaintContext';
 import { StatCard } from '../../components/common/StatCard';
@@ -55,21 +56,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
     .slice(0, 4);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2.25rem' }}>
       {/* 1. ADMIN HERO HEADER */}
-      <div
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
         style={{
-          background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-          borderRadius: 'var(--radius-xl)',
-          padding: '2rem 2.25rem',
+          background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
+          borderRadius: 'var(--radius-2xl)',
+          padding: '2.25rem 2.5rem',
           color: '#FFFFFF',
           display: 'flex',
           flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '1.5rem',
-          boxShadow: 'var(--shadow-xl)',
-          border: '1px solid #334155',
+          gap: '1.75rem',
+          boxShadow: '0 20px 40px -10px rgba(15, 23, 42, 0.45), inset 0 2px 3px rgba(255, 255, 255, 0.15)',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
         }}
       >
         <div>
@@ -77,134 +81,173 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.4rem',
+              gap: '0.45rem',
               background: 'rgba(217, 119, 6, 0.2)',
               border: '1px solid rgba(217, 119, 6, 0.4)',
-              padding: '3px 10px',
+              padding: '4px 12px',
               borderRadius: 'var(--radius-full)',
-              fontSize: '0.75rem',
-              fontWeight: 700,
+              fontSize: '0.775rem',
+              fontWeight: 800,
               color: '#FDE68A',
-              marginBottom: '0.6rem',
+              letterSpacing: '0.04em',
+              marginBottom: '0.75rem',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
             }}
           >
-            <ShieldCheck size={13} />
+            <ShieldCheck size={14} />
             <span>Campus Estate & Maintenance Operations Central</span>
           </div>
 
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFFFFF' }}>
+          <h2 style={{ fontSize: '1.95rem', fontWeight: 900, color: '#FFFFFF', letterSpacing: '-0.025em' }}>
             Welcome, {user?.name || 'Administrator'}
           </h2>
-          <p style={{ color: '#94A3B8', fontSize: '0.875rem', marginTop: '0.2rem' }}>
+          <p style={{ color: '#94A3B8', fontSize: '0.925rem', marginTop: '0.35rem' }}>
             Punjabi University Patiala Central Facilities Management Dashboard
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.85rem', flexWrap: 'wrap' }}>
           <Button
             variant="outline"
             size="md"
             onClick={() => exportCSV()}
             leftIcon={<Download size={16} />}
-            style={{ color: '#FFFFFF', borderColor: '#475569', background: 'rgba(255,255,255,0.05)' }}
+            style={{ color: '#FFFFFF', borderColor: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.08)' }}
           >
             Export CSV Log
           </Button>
           <Button
             variant="gold"
             size="md"
+            isMagnetic={true}
             onClick={() => onNavigate('/admin/complaints')}
             rightIcon={<ArrowRight size={16} />}
           >
             Manage All ({total})
           </Button>
         </div>
-      </div>
+      </motion.div>
 
-      {/* 2. STATS ROW */}
+      {/* 2. STATS ROW WITH STAGGERED ENTRANCE */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: '1.25rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+          gap: '1.35rem',
         }}
       >
-        <StatCard
-          label="Total Complaints"
-          value={total}
-          icon={<FileText size={22} />}
-          iconBg="var(--pup-navy-subtle)"
-          iconColor="var(--pup-navy)"
-          onClick={() => onNavigate('/admin/complaints')}
-        />
-        <StatCard
-          label="New / Pending Triage"
-          value={newPending}
-          icon={<Clock size={22} />}
-          iconBg="var(--status-review-bg)"
-          iconColor="var(--status-review)"
-          onClick={() => onNavigate('/admin/complaints?status=Submitted')}
-        />
-        <StatCard
-          label="In Progress"
-          value={inProgress}
-          icon={<Wrench size={22} />}
-          iconBg="var(--status-progress-bg)"
-          iconColor="#B45309"
-          onClick={() => onNavigate('/admin/complaints?status=In Progress')}
-        />
-        <StatCard
-          label="Resolved"
-          value={resolved}
-          icon={<CheckCircle2 size={22} />}
-          iconBg="var(--status-resolved-bg)"
-          iconColor="var(--status-resolved)"
-          onClick={() => onNavigate('/admin/complaints?status=Resolved')}
-        />
-        <StatCard
-          label="High / Urgent"
-          value={highUrgent}
-          icon={<Flame size={22} />}
-          iconBg="var(--priority-urgent-bg)"
-          iconColor="#DC2626"
-          onClick={() => onNavigate('/admin/complaints?priority=Urgent')}
-        />
-        <StatCard
-          label="Overdue (>48h)"
-          value={overdue}
-          icon={<AlertTriangle size={22} />}
-          iconBg="#FEF2F2"
-          iconColor="#DC2626"
-        />
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.0 }}
+        >
+          <StatCard
+            label="Total Complaints"
+            value={total}
+            icon={<FileText size={24} strokeWidth={2.4} />}
+            iconBg="var(--pup-navy-subtle)"
+            iconColor="var(--pup-navy)"
+            onClick={() => onNavigate('/admin/complaints')}
+          />
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.04 }}
+        >
+          <StatCard
+            label="New / Pending Triage"
+            value={newPending}
+            icon={<Clock size={24} strokeWidth={2.4} />}
+            iconBg="var(--status-review-bg)"
+            iconColor="var(--status-review)"
+            onClick={() => onNavigate('/admin/complaints?status=Submitted')}
+          />
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.08 }}
+        >
+          <StatCard
+            label="In Progress"
+            value={inProgress}
+            icon={<Wrench size={24} strokeWidth={2.4} />}
+            iconBg="var(--status-progress-bg)"
+            iconColor="#B45309"
+            onClick={() => onNavigate('/admin/complaints?status=In Progress')}
+          />
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.12 }}
+        >
+          <StatCard
+            label="Resolved"
+            value={resolved}
+            icon={<CheckCircle2 size={24} strokeWidth={2.4} />}
+            iconBg="var(--status-resolved-bg)"
+            iconColor="var(--status-resolved)"
+            onClick={() => onNavigate('/admin/complaints?status=Resolved')}
+          />
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.16 }}
+        >
+          <StatCard
+            label="High / Urgent"
+            value={highUrgent}
+            icon={<Flame size={24} strokeWidth={2.4} />}
+            iconBg="var(--priority-urgent-bg)"
+            iconColor="#DC2626"
+            onClick={() => onNavigate('/admin/complaints?priority=Urgent')}
+          />
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <StatCard
+            label="Overdue (>48h)"
+            value={overdue}
+            icon={<AlertTriangle size={24} strokeWidth={2.4} />}
+            iconBg="#FEF2F2"
+            iconColor="#DC2626"
+          />
+        </motion.div>
       </div>
 
       {/* 3. URGENT TRIAGE QUEUE & DEPARTMENT GLANCE */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-          gap: '1.75rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+          gap: '2rem',
           alignItems: 'start',
         }}
       >
         {/* Left: Urgent Action Queue */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Flame size={18} style={{ color: '#DC2626' }} />
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>High & Urgent Triage Queue</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Flame size={20} style={{ color: '#DC2626' }} />
+              <h3 style={{ fontSize: '1.35rem', fontWeight: 900, letterSpacing: '-0.02em' }}>High & Urgent Triage Queue</h3>
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onNavigate('/admin/complaints')}
-              rightIcon={<ArrowRight size={14} />}
+              rightIcon={<ArrowRight size={15} />}
             >
               View Full Queue
             </Button>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {loading && complaints.length === 0 ? (
               <LoadingSkeleton type="card" count={3} />
             ) : urgentComplaints.length === 0 ? (
@@ -215,77 +258,85 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 />
               </Card>
             ) : (
-              urgentComplaints.map((item) => (
-                <Card
+              urgentComplaints.map((item, index) => (
+                <motion.div
                   key={item.id}
-                  interactive={true}
-                  onClick={() => onNavigate(`/admin/complaints/${item.id}`)}
-                  style={{
-                    padding: '1.25rem',
-                    borderLeft: `4px solid ${item.priority === 'Urgent' ? '#DC2626' : '#D97706'}`,
-                  }}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: index * 0.06 }}
                 >
-                  <div
+                  <Card
+                    interactive={true}
+                    glowOnHover={true}
+                    onClick={() => onNavigate(`/admin/complaints/${item.id}`)}
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: '0.5rem',
+                      padding: '1.35rem 1.5rem',
+                      borderLeft: `5px solid ${item.priority === 'Urgent' ? '#DC2626' : '#D97706'}`,
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span
-                        style={{
-                          fontFamily: 'monospace',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          color: 'var(--pup-maroon)',
-                          background: 'var(--pup-maroon-subtle)',
-                          padding: '2px 6px',
-                          borderRadius: 'var(--radius-sm)',
-                        }}
-                      >
-                        {item.id}
-                      </span>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-                        {item.category}
-                      </span>
-                    </div>
-                    <PriorityBadge priority={item.priority} />
-                  </div>
-
-                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.35rem' }}>
-                    {item.title}
-                  </h4>
-
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      fontSize: '0.75rem',
-                      color: 'var(--text-muted)',
-                      marginTop: '0.5rem',
-                      paddingTop: '0.5rem',
-                      borderTop: '1px solid var(--border-subtle)',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <MapPin size={12} style={{ color: 'var(--pup-maroon)' }} />
-                      <span>{item.location}</span>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: '0.65rem',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <span
+                          style={{
+                            fontFamily: 'monospace',
+                            fontSize: '0.775rem',
+                            fontWeight: 800,
+                            color: 'var(--pup-maroon)',
+                            background: 'var(--pup-maroon-subtle)',
+                            padding: '3px 8px',
+                            borderRadius: 'var(--radius-sm)',
+                            boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.9)',
+                          }}
+                        >
+                          {item.id}
+                        </span>
+                        <span style={{ fontSize: '0.775rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+                          {item.category}
+                        </span>
+                      </div>
+                      <PriorityBadge priority={item.priority} />
                     </div>
 
-                    <StatusBadge status={item.status} />
-                  </div>
-                </Card>
+                    <h4 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '0.4rem', letterSpacing: '-0.015em' }}>
+                      {item.title}
+                    </h4>
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        fontSize: '0.775rem',
+                        color: 'var(--text-muted)',
+                        marginTop: '0.65rem',
+                        paddingTop: '0.65rem',
+                        borderTop: '1px solid rgba(241, 245, 249, 0.85)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500 }}>
+                        <MapPin size={13} style={{ color: 'var(--pup-maroon)' }} />
+                        <span>{item.location}</span>
+                      </div>
+
+                      <StatusBadge status={item.status} />
+                    </div>
+                  </Card>
+                </motion.div>
               ))
             )}
           </div>
         </div>
 
         {/* Right: Department Operations Summary */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <Card>
             <CardHeader
               title="Department Workloads"
@@ -296,7 +347,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                   size="sm"
                   onClick={() => onNavigate('/admin/analytics')}
                 >
-                  <BarChart3 size={16} />
+                  <BarChart3 size={17} />
                 </Button>
               }
             />
@@ -314,20 +365,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     <div
                       key={dept.id}
                       style={{
-                        padding: '0.75rem',
-                        background: 'var(--bg-main)',
-                        borderRadius: 'var(--radius-md)',
-                        border: '1px solid var(--border-light)',
+                        padding: '0.9rem 1.15rem',
+                        background: 'var(--clay-inset-bg)',
+                        borderRadius: 'var(--radius-lg)',
+                        boxShadow: 'var(--clay-inset-shadow)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                       }}
                     >
                       <div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        <div style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                           {dept.name}
                         </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
                           Lead: {dept.leadOfficer}
                         </div>
                       </div>
@@ -336,11 +387,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                         <span
                           style={{
                             fontSize: '0.75rem',
-                            fontWeight: 700,
-                            color: active > 0 ? '#D97706' : '#059669',
+                            fontWeight: 800,
+                            color: active > 0 ? '#B45309' : '#059669',
                             background: active > 0 ? '#FEF3C7' : '#ECFDF5',
-                            padding: '2px 8px',
+                            padding: '3px 10px',
                             borderRadius: 'var(--radius-full)',
+                            boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.9)',
                           }}
                         >
                           {active} Active

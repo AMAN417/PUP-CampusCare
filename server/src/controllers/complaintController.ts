@@ -173,6 +173,16 @@ export const deleteComplaint = async (
       throw new AppError('Authentication required.', 401);
     }
 
+    // Zero-trust re-check: deletion is strictly ADMIN-ONLY. The verified
+    // server-side session role is authoritative — any role flag sent from the
+    // frontend is ignored entirely.
+    if (user.role !== 'admin') {
+      throw new AppError(
+        'Access denied: Only administrators can delete complaints.',
+        403
+      );
+    }
+
     await complaintService.deleteComplaint(id, user.id, user.role);
 
     const response: ApiResponse<null> = {
@@ -196,10 +206,34 @@ export const updateComplaintStatus = async (
   try {
     const id = req.params.id as string;
     const { status, notes, department } = req.body;
+    const user = req.user;
+
+    if (!user) {
+      throw new AppError('Authentication required.', 401);
+    }
+
+    // Authorization:
+    // - Admins may apply any valid lifecycle transition.
+    // - Students may ONLY confirm & close their own complaint while it is Resolved.
+    if (user.role !== 'admin') {
+      const existing = await complaintService.getById(id);
+      const isOwner = isStudentComplaintOwner(existing, user);
+      const isConfirmClose =
+        user.role === 'student' &&
+        existing.status === 'Resolved' &&
+        status === 'Closed';
+
+      if (!isOwner || !isConfirmClose) {
+        throw new AppError(
+          'Access denied: Only administrators can advance complaint status. Students may only confirm and close their own resolved complaints.',
+          403
+        );
+      }
+    }
 
     // Server-side audit details: record verified updater name and role
-    const updatedBy = req.user?.name || 'Administrator';
-    const role = req.user?.role || 'admin';
+    const updatedBy = user.name || 'Administrator';
+    const role = user.role;
 
     const updated = await complaintService.updateStatus(
       id,

@@ -32,20 +32,20 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({ onNavigate
   const getIcon = (type: string) => {
     switch (type) {
       case 'status_change':
-        return <Clock size={18} style={{ color: 'var(--pup-maroon)' }} />;
+        return <Clock size={19} strokeWidth={2.4} style={{ color: 'var(--pup-maroon)' }} />;
       case 'assignment':
-        return <UserCheck size={18} style={{ color: '#0284C7' }} />;
+        return <UserCheck size={19} strokeWidth={2.4} style={{ color: '#0284C7' }} />;
       case 'comment':
-        return <MessageSquare size={18} style={{ color: '#059669' }} />;
+        return <MessageSquare size={19} strokeWidth={2.4} style={{ color: '#059669' }} />;
       case 'urgent':
-        return <ShieldAlert size={18} style={{ color: '#DC2626' }} />;
+        return <ShieldAlert size={19} strokeWidth={2.4} style={{ color: '#DC2626' }} />;
       default:
-        return <Bell size={18} style={{ color: 'var(--pup-gold)' }} />;
+        return <Bell size={19} strokeWidth={2.4} style={{ color: 'var(--pup-gold)' }} />;
     }
   };
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div style={{ maxWidth: '840px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       {/* Header */}
       <div
         style={{
@@ -57,8 +57,8 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({ onNavigate
         }}
       >
         <div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Campus Notifications</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem', marginTop: '0.2rem' }}>
+          <h2 style={{ fontSize: '1.95rem', fontWeight: 900, letterSpacing: '-0.025em' }}>Campus Notifications</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginTop: '0.25rem' }}>
             Real-time updates regarding your filed complaints, engineer assignments, and responses.
           </p>
         </div>
@@ -68,7 +68,7 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({ onNavigate
             variant="outline"
             size="sm"
             onClick={markAllNotificationsRead}
-            leftIcon={<CheckCheck size={15} />}
+            leftIcon={<CheckCheck size={16} />}
           >
             Mark All as Read
           </Button>
@@ -76,21 +76,53 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({ onNavigate
       </div>
 
       {/* Filter Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
-        <Button
-          variant={filter === 'all' ? 'primary' : 'ghost'}
-          size="sm"
+      <div
+        style={{
+          display: 'flex',
+          background: 'var(--clay-inset-bg)',
+          borderRadius: 'var(--radius-xl)',
+          padding: '4px',
+          boxShadow: 'var(--clay-inset-shadow)',
+          width: 'fit-content',
+          gap: '0.35rem',
+        }}
+      >
+        <button
+          type="button"
           onClick={() => setFilter('all')}
+          style={{
+            padding: '6px 14px',
+            border: 'none',
+            borderRadius: 'var(--radius-lg)',
+            background: filter === 'all' ? '#FFFFFF' : 'transparent',
+            boxShadow: filter === 'all' ? '0 2px 6px rgba(15, 23, 42, 0.08)' : 'none',
+            color: filter === 'all' ? 'var(--pup-maroon)' : 'var(--text-secondary)',
+            fontWeight: filter === 'all' ? 800 : 600,
+            fontSize: '0.85rem',
+            cursor: 'pointer',
+            transition: 'all var(--transition-fast)',
+          }}
         >
           All ({notifications.length})
-        </Button>
-        <Button
-          variant={filter === 'unread' ? 'primary' : 'ghost'}
-          size="sm"
+        </button>
+        <button
+          type="button"
           onClick={() => setFilter('unread')}
+          style={{
+            padding: '6px 14px',
+            border: 'none',
+            borderRadius: 'var(--radius-lg)',
+            background: filter === 'unread' ? '#FFFFFF' : 'transparent',
+            boxShadow: filter === 'unread' ? '0 2px 6px rgba(15, 23, 42, 0.08)' : 'none',
+            color: filter === 'unread' ? 'var(--pup-maroon)' : 'var(--text-secondary)',
+            fontWeight: filter === 'unread' ? 800 : 600,
+            fontSize: '0.85rem',
+            cursor: 'pointer',
+            transition: 'all var(--transition-fast)',
+          }}
         >
           Unread ({unreadNotificationCount})
-        </Button>
+        </button>
       </div>
 
       {/* Notifications List */}
@@ -99,11 +131,11 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({ onNavigate
           <EmptyState
             title={filter === 'unread' ? 'No unread notifications' : 'No notifications yet'}
             description="You are fully caught up with all campus alerts and complaint updates."
-            icon={<Bell size={32} />}
+            icon={<Bell size={36} />}
           />
         </Card>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {filtered.map((item) => (
             <Card
               key={item.id}
@@ -115,19 +147,21 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({ onNavigate
                 }
               }}
               style={{
-                padding: '1.25rem',
-                borderLeft: item.read ? '1px solid var(--border-light)' : '4px solid var(--pup-maroon)',
-                background: item.read ? 'var(--bg-surface)' : 'var(--pup-maroon-subtle)',
+                padding: '1.35rem 1.5rem',
+                borderLeft: item.read ? 'var(--clay-card-border)' : '5px solid var(--pup-maroon)',
+                background: item.read ? 'var(--clay-card-bg)' : 'linear-gradient(145deg, #FFFFFF 0%, #FDF2F4 100%)',
+                boxShadow: item.read ? 'var(--clay-card-shadow)' : '0 8px 20px -3px rgba(122, 18, 40, 0.12), inset 0 1.5px 2px rgba(255, 255, 255, 1)',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.15rem' }}>
                 <div
                   style={{
-                    width: '38px',
-                    height: '38px',
-                    borderRadius: 'var(--radius-md)',
-                    background: 'var(--bg-surface)',
-                    border: '1px solid var(--border-light)',
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: 'var(--radius-lg)',
+                    background: 'var(--clay-card-bg)',
+                    border: 'var(--clay-card-border)',
+                    boxShadow: 'var(--clay-card-shadow)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -143,13 +177,13 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({ onNavigate
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      marginBottom: '0.25rem',
+                      marginBottom: '0.35rem',
                     }}
                   >
-                    <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+                    <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
                       {item.title}
                     </h4>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
                       {new Date(item.createdAt).toLocaleString([], {
                         month: 'short',
                         day: 'numeric',
@@ -159,7 +193,7 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({ onNavigate
                     </span>
                   </div>
 
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 0.5rem 0', lineHeight: 1.4 }}>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0 0 0.65rem 0', lineHeight: 1.5 }}>
                     {item.message}
                   </p>
 
@@ -168,14 +202,14 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({ onNavigate
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.25rem',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
+                        gap: '0.35rem',
+                        fontSize: '0.785rem',
+                        fontWeight: 800,
                         color: 'var(--pup-maroon)',
                       }}
                     >
                       <span>View Ticket ({item.complaintId})</span>
-                      <ArrowRight size={13} />
+                      <ArrowRight size={14} />
                     </div>
                   )}
                 </div>

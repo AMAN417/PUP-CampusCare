@@ -33,16 +33,16 @@ interface SubmitComplaintProps {
 }
 
 const CATEGORY_ICONS: Record<ComplaintCategory, React.ReactNode> = {
-  Hostel: <Home size={18} />,
-  Classroom: <GraduationCap size={18} />,
-  Electricity: <Zap size={18} />,
-  Water: <Droplets size={18} />,
-  Sanitation: <Sparkles size={18} />,
-  Internet: <Wifi size={18} />,
-  Transportation: <Bus size={18} />,
-  Infrastructure: <Building2 size={18} />,
-  Security: <ShieldAlert size={18} />,
-  Other: <HelpCircle size={18} />,
+  Hostel: <Home size={19} strokeWidth={2.4} />,
+  Classroom: <GraduationCap size={19} strokeWidth={2.4} />,
+  Electricity: <Zap size={19} strokeWidth={2.4} />,
+  Water: <Droplets size={19} strokeWidth={2.4} />,
+  Sanitation: <Sparkles size={19} strokeWidth={2.4} />,
+  Internet: <Wifi size={19} strokeWidth={2.4} />,
+  Transportation: <Bus size={19} strokeWidth={2.4} />,
+  Infrastructure: <Building2 size={19} strokeWidth={2.4} />,
+  Security: <ShieldAlert size={19} strokeWidth={2.4} />,
+  Other: <HelpCircle size={19} strokeWidth={2.4} />,
 };
 
 export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
@@ -146,16 +146,16 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
   };
 
   return (
-    <div style={{ maxWidth: '820px', margin: '0 auto', width: '100%' }}>
+    <div style={{ maxWidth: '860px', margin: '0 auto', width: '100%' }}>
       {/* Header */}
-      <div style={{ marginBottom: '1.75rem' }}>
-        <h2 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Submit a Campus Complaint</h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem', marginTop: '0.2rem' }}>
+      <div style={{ marginBottom: '2rem' }}>
+        <h2 style={{ fontSize: '1.95rem', fontWeight: 900, letterSpacing: '-0.025em' }}>Submit a Campus Complaint</h2>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginTop: '0.25rem' }}>
           Provide clear details and optional photo evidence to expedite maintenance routing and resolution.
         </p>
       </div>
 
-      <Card style={{ padding: '2rem' }}>
+      <Card style={{ padding: '2.5rem 2.25rem' }}>
         {submitError && (
           <div
             style={{
@@ -165,10 +165,11 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
               background: '#FEF2F2',
               border: '1.5px solid #FCA5A5',
               color: '#DC2626',
-              padding: '0.85rem 1rem',
-              borderRadius: 'var(--radius-md)',
+              padding: '0.9rem 1.15rem',
+              borderRadius: 'var(--radius-lg)',
               marginBottom: '1.5rem',
               fontSize: '0.875rem',
+              fontWeight: 600,
             }}
           >
             <AlertCircle size={18} style={{ flexShrink: 0 }} />
@@ -192,7 +193,7 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
               disabled={isSubmitting}
               maxLength={120}
             />
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+            <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)', marginTop: '0.35rem', fontWeight: 500 }}>
               Keep it concise and descriptive. (Max 120 characters)
             </div>
           </div>
@@ -203,9 +204,9 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))',
-                gap: '0.5rem',
-                marginTop: '0.4rem',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                gap: '0.65rem',
+                marginTop: '0.5rem',
               }}
             >
               {(Object.keys(CATEGORY_METADATA) as ComplaintCategory[]).map((cat) => {
@@ -220,16 +221,19 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '0.35rem',
-                      padding: '0.75rem 0.5rem',
-                      borderRadius: 'var(--radius-md)',
-                      border: `1.5px solid ${isSelected ? 'var(--pup-maroon)' : 'var(--border-light)'}`,
-                      background: isSelected ? 'var(--pup-maroon-subtle)' : 'var(--bg-surface)',
+                      gap: '0.45rem',
+                      padding: '0.85rem 0.6rem',
+                      borderRadius: 'var(--radius-lg)',
+                      border: isSelected ? '1.5px solid rgba(122, 18, 40, 0.3)' : '1px solid rgba(226, 232, 240, 0.7)',
+                      background: isSelected ? 'linear-gradient(145deg, #FFFFFF 0%, #FDF2F4 100%)' : 'var(--clay-card-bg)',
                       color: isSelected ? 'var(--pup-maroon)' : 'var(--text-secondary)',
+                      boxShadow: isSelected
+                        ? '0 6px 14px -2px rgba(122, 18, 40, 0.15), inset 0 1.5px 2px rgba(255, 255, 255, 1)'
+                        : 'var(--clay-card-shadow)',
                       cursor: isSubmitting ? 'not-allowed' : 'pointer',
                       opacity: isSubmitting ? 0.7 : 1,
-                      fontSize: '0.8125rem',
-                      fontWeight: isSelected ? 700 : 500,
+                      fontSize: '0.825rem',
+                      fontWeight: isSelected ? 800 : 600,
                       transition: 'all var(--transition-fast)',
                     }}
                   >
@@ -270,8 +274,8 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
             </div>
 
             {/* Quick Location Chips */}
-            <div style={{ marginTop: '0.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginRight: '0.25rem', alignSelf: 'center' }}>
+            <div style={{ marginTop: '0.65rem', display: 'flex', flexWrap: 'wrap', gap: '0.45rem', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.775rem', color: 'var(--text-muted)', fontWeight: 600, marginRight: '0.2rem' }}>
                 Suggestions:
               </span>
               {locationSuggestions.slice(0, 4).map((loc) => (
@@ -281,13 +285,16 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
                   onClick={() => setLocation(loc)}
                   disabled={isSubmitting}
                   style={{
-                    background: 'var(--bg-main)',
-                    border: '1px solid var(--border-light)',
+                    background: 'var(--clay-btn-outline-bg)',
+                    border: '1px solid rgba(255, 255, 255, 0.9)',
+                    boxShadow: '0 2px 5px rgba(15, 23, 42, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.9)',
                     borderRadius: 'var(--radius-full)',
-                    padding: '2px 8px',
-                    fontSize: '0.7rem',
+                    padding: '3px 10px',
+                    fontSize: '0.725rem',
+                    fontWeight: 600,
                     color: 'var(--text-secondary)',
                     cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    transition: 'all var(--transition-fast)',
                   }}
                 >
                   {loc}
@@ -302,12 +309,12 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-                gap: '0.75rem',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                gap: '0.85rem',
               }}
             >
               {[
-                { level: 'Low' as Priority, desc: 'Minor cosmetic / routine fix', color: '#059669', bg: '#ECFDF5' },
+                { level: 'Low' as Priority, desc: 'Routine fix / minor touchup', color: '#059669', bg: '#ECFDF5' },
                 { level: 'Medium' as Priority, desc: 'Regular maintenance issue', color: '#2563EB', bg: '#EFF6FF' },
                 { level: 'High' as Priority, desc: 'Affects daily classes or studies', color: '#D97706', bg: '#FEF3C7' },
                 { level: 'Urgent' as Priority, desc: 'Safety hazard or total outage', color: '#DC2626', bg: '#FEF2F2' },
@@ -320,21 +327,24 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
                     onClick={() => setPriority(p.level)}
                     disabled={isSubmitting}
                     style={{
-                      padding: '0.75rem',
-                      borderRadius: 'var(--radius-md)',
-                      border: `1.5px solid ${isSelected ? p.color : 'var(--border-light)'}`,
-                      background: isSelected ? p.bg : 'var(--bg-surface)',
+                      padding: '0.85rem 1rem',
+                      borderRadius: 'var(--radius-lg)',
+                      border: `1.5px solid ${isSelected ? p.color : 'rgba(226, 232, 240, 0.7)'}`,
+                      background: isSelected ? p.bg : 'var(--clay-card-bg)',
+                      boxShadow: isSelected
+                        ? `0 6px 14px -2px ${p.color}25, inset 0 1.5px 2px rgba(255, 255, 255, 1)`
+                        : 'var(--clay-card-shadow)',
                       textAlign: 'left',
                       cursor: isSubmitting ? 'not-allowed' : 'pointer',
                       opacity: isSubmitting ? 0.7 : 1,
                       transition: 'all var(--transition-fast)',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700, fontSize: '0.875rem', color: p.color }}>
-                      {p.level === 'Urgent' && <Flame size={14} />}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 800, fontSize: '0.9rem', color: p.color }}>
+                      {p.level === 'Urgent' && <Flame size={15} strokeWidth={2.4} />}
                       <span>{p.level}</span>
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', lineHeight: 1.35, fontWeight: 500 }}>
                       {p.desc}
                     </div>
                   </button>
@@ -362,11 +372,12 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
             <label className="form-label">Photo / Evidence Attachment (Optional)</label>
             <div
               style={{
-                border: '2px dashed var(--border-light)',
-                borderRadius: 'var(--radius-lg)',
-                padding: '1.5rem',
+                border: '2px dashed rgba(203, 213, 225, 0.9)',
+                borderRadius: 'var(--radius-xl)',
+                padding: '1.75rem',
                 textAlign: 'center',
-                background: 'var(--bg-main)',
+                background: 'var(--clay-inset-bg)',
+                boxShadow: 'var(--clay-inset-shadow)',
                 position: 'relative',
               }}
             >
@@ -390,28 +401,29 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '0.4rem',
+                  gap: '0.5rem',
                   color: 'var(--text-secondary)',
                 }}
               >
                 <div
                   style={{
-                    width: '40px',
-                    height: '40px',
+                    width: '44px',
+                    height: '44px',
                     borderRadius: '50%',
-                    background: 'var(--bg-surface)',
+                    background: '#FFFFFF',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: 'var(--pup-maroon)',
+                    boxShadow: '0 4px 10px rgba(15, 23, 42, 0.08), inset 0 1px 2px rgba(255, 255, 255, 1)',
                   }}
                 >
                   <Upload size={20} />
                 </div>
-                <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                <div style={{ fontSize: '0.9rem', fontWeight: 700 }}>
                   Click or drag photo here to attach
                 </div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)', fontWeight: 500 }}>
                   Supports JPG, PNG, PDF up to 10MB
                 </div>
               </div>
@@ -419,7 +431,7 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
 
             {/* Attached files preview */}
             {attachments.length > 0 && (
-              <div style={{ marginTop: '0.75rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div style={{ marginTop: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
                 {attachments.map((att) => (
                   <div
                     key={att.id}
@@ -427,18 +439,20 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.5rem',
-                      background: 'var(--bg-surface)',
-                      border: '1px solid var(--border-light)',
+                      background: 'var(--clay-card-bg)',
+                      border: 'var(--clay-card-border)',
+                      boxShadow: 'var(--clay-card-shadow)',
                       borderRadius: 'var(--radius-md)',
-                      padding: '4px 10px',
-                      fontSize: '0.8125rem',
+                      padding: '6px 12px',
+                      fontSize: '0.825rem',
+                      fontWeight: 600,
                     }}
                   >
-                    <ImageIcon size={14} style={{ color: 'var(--pup-maroon)' }} />
-                    <span style={{ maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <ImageIcon size={15} style={{ color: 'var(--pup-maroon)' }} />
+                    <span style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {att.name}
                     </span>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>({att.size})</span>
+                    <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>({att.size})</span>
                     <button
                       type="button"
                       onClick={() => handleRemoveAttachment(att.id)}
@@ -453,7 +467,7 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
                       }}
                       aria-label="Remove attachment"
                     >
-                      <X size={14} />
+                      <X size={15} />
                     </button>
                   </div>
                 ))}
@@ -464,9 +478,9 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
           {/* Form Actions */}
           <div
             style={{
-              marginTop: '2rem',
-              paddingTop: '1.25rem',
-              borderTop: '1px solid var(--border-subtle)',
+              marginTop: '2.25rem',
+              paddingTop: '1.5rem',
+              borderTop: '1px solid rgba(241, 245, 249, 0.85)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'flex-end',
@@ -487,7 +501,7 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
               size="lg"
               isLoading={isSubmitting}
               disabled={isSubmitting}
-              leftIcon={!isSubmitting ? <PlusCircle size={18} /> : undefined}
+              leftIcon={!isSubmitting ? <PlusCircle size={19} /> : undefined}
             >
               {isSubmitting ? 'Submitting...' : 'Submit Complaint'}
             </Button>
@@ -505,48 +519,50 @@ export const SubmitComplaint: React.FC<SubmitComplaintProps> = ({
         }}
         title="Complaint Registered Successfully!"
       >
-        <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+        <div style={{ textAlign: 'center', padding: '1.25rem 0' }}>
           <div
             style={{
-              width: '64px',
-              height: '64px',
+              width: '68px',
+              height: '68px',
               borderRadius: '50%',
               background: '#ECFDF5',
               color: '#059669',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 1.25rem auto',
+              margin: '0 auto 1.5rem auto',
+              boxShadow: '0 8px 20px rgba(5, 150, 105, 0.2), inset 0 2px 3px rgba(255, 255, 255, 1)',
             }}
           >
-            <CheckCircle2 size={36} />
+            <CheckCircle2 size={38} strokeWidth={2.5} />
           </div>
 
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.35rem' }}>
+          <h3 style={{ fontSize: '1.35rem', fontWeight: 900, marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>
             Complaint Reference Generated
           </h3>
           <div
             style={{
               fontFamily: 'monospace',
-              fontSize: '1.35rem',
-              fontWeight: 800,
+              fontSize: '1.4rem',
+              fontWeight: 900,
               color: 'var(--pup-maroon)',
               background: 'var(--pup-maroon-subtle)',
-              padding: '0.4rem 1rem',
-              borderRadius: 'var(--radius-md)',
+              padding: '0.5rem 1.25rem',
+              borderRadius: 'var(--radius-lg)',
               display: 'inline-block',
-              margin: '0.5rem 0 1rem 0',
-              border: '1px solid rgba(122, 18, 40, 0.2)',
+              margin: '0.6rem 0 1.25rem 0',
+              border: '1px solid rgba(122, 18, 40, 0.15)',
+              boxShadow: '0 4px 10px rgba(122, 18, 40, 0.08), inset 0 1px 2px rgba(255, 255, 255, 0.9)',
             }}
           >
             {createdComplaintId}
           </div>
 
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 auto 1.5rem auto', maxWidth: '420px' }}>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.55, margin: '0 auto 1.75rem auto', maxWidth: '440px' }}>
             Your complaint has been logged into the PUP CampusCare maintenance queue. Department officers have been alerted and will review your ticket.
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             <Button
               variant="primary"
               size="md"

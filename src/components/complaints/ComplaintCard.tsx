@@ -27,7 +27,7 @@ export const ComplaintCard: React.FC<ComplaintCardProps> = ({ complaint, onOpen 
         height: '100%',
         position: 'relative',
         overflow: 'hidden',
-        borderLeft: `4px solid ${catMeta.color}`,
+        borderLeft: `5px solid ${catMeta.color}`,
       }}
     >
       <div>
@@ -37,7 +37,7 @@ export const ComplaintCard: React.FC<ComplaintCardProps> = ({ complaint, onOpen 
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginBottom: '0.75rem',
+            marginBottom: '0.85rem',
             gap: '0.5rem',
             flexWrap: 'wrap',
           }}
@@ -46,25 +46,26 @@ export const ComplaintCard: React.FC<ComplaintCardProps> = ({ complaint, onOpen 
             <span
               style={{
                 fontFamily: 'monospace',
-                fontSize: '0.75rem',
-                fontWeight: 700,
+                fontSize: '0.775rem',
+                fontWeight: 800,
                 color: 'var(--text-muted)',
-                background: 'var(--bg-main)',
-                padding: '2px 6px',
+                background: 'var(--clay-inset-bg)',
+                padding: '3px 8px',
                 borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-light)',
+                boxShadow: 'inset 1px 1px 2px rgba(15, 23, 42, 0.06)',
               }}
             >
               {complaint.id}
             </span>
             <span
               style={{
-                fontSize: '0.75rem',
-                fontWeight: 700,
+                fontSize: '0.775rem',
+                fontWeight: 800,
                 color: catMeta.color,
                 background: `${catMeta.color}15`,
-                padding: '2px 8px',
+                padding: '3px 10px',
                 borderRadius: 'var(--radius-full)',
+                boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.8)',
               }}
             >
               {complaint.category}
@@ -77,11 +78,12 @@ export const ComplaintCard: React.FC<ComplaintCardProps> = ({ complaint, onOpen 
         {/* Title */}
         <h4
           style={{
-            fontSize: '1rem',
-            fontWeight: 700,
+            fontSize: '1.05rem',
+            fontWeight: 800,
             color: 'var(--text-primary)',
-            lineHeight: 1.35,
-            marginBottom: '0.5rem',
+            lineHeight: 1.3,
+            marginBottom: '0.6rem',
+            letterSpacing: '-0.015em',
           }}
         >
           {complaint.title}
@@ -90,10 +92,10 @@ export const ComplaintCard: React.FC<ComplaintCardProps> = ({ complaint, onOpen 
         {/* Description snippet */}
         <p
           style={{
-            fontSize: '0.8125rem',
+            fontSize: '0.85rem',
             color: 'var(--text-secondary)',
             lineHeight: 1.5,
-            marginBottom: '1rem',
+            marginBottom: '1.15rem',
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
@@ -104,17 +106,18 @@ export const ComplaintCard: React.FC<ComplaintCardProps> = ({ complaint, onOpen 
         </p>
 
         {/* Location & Metadata */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '1.15rem' }}>
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '0.35rem',
-              fontSize: '0.75rem',
+              gap: '0.45rem',
+              fontSize: '0.8rem',
               color: 'var(--text-muted)',
+              fontWeight: 500,
             }}
           >
-            <MapPin size={13} style={{ flexShrink: 0, color: 'var(--pup-maroon)' }} />
+            <MapPin size={14} style={{ flexShrink: 0, color: 'var(--pup-maroon)' }} />
             <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {complaint.location}
             </span>
@@ -124,12 +127,13 @@ export const ComplaintCard: React.FC<ComplaintCardProps> = ({ complaint, onOpen 
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '0.35rem',
-              fontSize: '0.75rem',
+              gap: '0.45rem',
+              fontSize: '0.8rem',
               color: 'var(--text-muted)',
+              fontWeight: 500,
             }}
           >
-            <Calendar size={13} style={{ flexShrink: 0 }} />
+            <Calendar size={14} style={{ flexShrink: 0 }} />
             <span>
               Reported on {new Date(complaint.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
             </span>
@@ -140,8 +144,8 @@ export const ComplaintCard: React.FC<ComplaintCardProps> = ({ complaint, onOpen 
       {/* Footer */}
       <div
         style={{
-          paddingTop: '0.75rem',
-          borderTop: '1px solid var(--border-subtle)',
+          paddingTop: '0.85rem',
+          borderTop: '1px solid rgba(241, 245, 249, 0.85)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -149,18 +153,19 @@ export const ComplaintCard: React.FC<ComplaintCardProps> = ({ complaint, onOpen 
       >
         <StatusBadge status={complaint.status} />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           {complaint.comments.length > 0 && (
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.2rem',
-                fontSize: '0.75rem',
+                gap: '0.25rem',
+                fontSize: '0.775rem',
                 color: 'var(--text-muted)',
+                fontWeight: 600,
               }}
             >
-              <MessageSquare size={13} />
+              <MessageSquare size={14} />
               <span>{complaint.comments.length}</span>
             </div>
           )}
@@ -170,12 +175,13 @@ export const ComplaintCard: React.FC<ComplaintCardProps> = ({ complaint, onOpen 
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.2rem',
-                fontSize: '0.75rem',
+                gap: '0.25rem',
+                fontSize: '0.775rem',
                 color: 'var(--text-muted)',
+                fontWeight: 600,
               }}
             >
-              <Paperclip size={13} />
+              <Paperclip size={14} />
               <span>{complaint.attachments.length}</span>
             </div>
           )}
@@ -185,13 +191,13 @@ export const ComplaintCard: React.FC<ComplaintCardProps> = ({ complaint, onOpen 
               display: 'flex',
               alignItems: 'center',
               color: 'var(--pup-maroon)',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              gap: '0.15rem',
+              fontSize: '0.8rem',
+              fontWeight: 800,
+              gap: '0.2rem',
             }}
           >
             <span>View</span>
-            <ArrowRight size={13} />
+            <ArrowRight size={14} />
           </span>
         </div>
       </div>

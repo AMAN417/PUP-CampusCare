@@ -533,10 +533,9 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({
         return null;
       }
     } else {
-      // Local storage fallback: find and update
-      const existing = complaints.find((c) => c.id.toLowerCase() === complaintId.toLowerCase());
-      if (!existing) return null;
-      const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
+      // Local storage fallback: find, update, and persist
+      const updated = storage.updateComplaintFields(complaintId, updates);
+      if (!updated) return null;
       setComplaints((prev) =>
         prev.map((c) => (c.id.toLowerCase() === complaintId.toLowerCase() ? updated : c))
       );
@@ -557,10 +556,14 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({
         return false;
       }
     } else {
-      setComplaints((prev) =>
-        prev.filter((c) => c.id.toLowerCase() !== complaintId.toLowerCase())
-      );
-      return true;
+      // Local mode: persist removal so it survives a page refresh
+      const removed = storage.removeComplaint(complaintId);
+      if (removed) {
+        setComplaints((prev) =>
+          prev.filter((c) => c.id.toLowerCase() !== complaintId.toLowerCase())
+        );
+      }
+      return removed;
     }
   };
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useComplaints } from '../../context/ComplaintContext';
+import { useToast } from '../../context/ToastContext';
 import type { ComplaintStatus, Complaint } from '../../types';
 import { StatusBadge, PriorityBadge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
@@ -12,8 +13,10 @@ import {
   ArrowLeft,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   Wrench,
   UserCheck,
+  Trash2,
 } from 'lucide-react';
 import { DEMO_DEPARTMENTS, CATEGORY_METADATA } from '../../data/mockData';
 
@@ -26,8 +29,9 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
   complaintId,
   onNavigate,
 }) => {
-  const { getComplaintById, fetchComplaintById, updateStatus, assignOfficer, addComment } =
+  const { getComplaintById, fetchComplaintById, updateStatus, assignOfficer, addComment, deleteComplaint } =
     useComplaints();
+  const { success } = useToast();
 
   const [complaint, setComplaint] = useState<Complaint | undefined>(() =>
     getComplaintById(complaintId)
@@ -35,6 +39,8 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(!complaint);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<boolean>(false);
   const [isAssigning, setIsAssigning] = useState<boolean>(false);
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   const [selectedStatus, setSelectedStatus] = useState<ComplaintStatus>(
     complaint?.status || 'Submitted'
@@ -162,13 +168,29 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
     }
   };
 
+  const handleConfirmDelete = async () => {
+    if (!complaint || isDeleting) return;
+    setIsDeleting(true);
+    try {
+      const ok = await deleteComplaint(complaint.id);
+      if (ok) {
+        success('Complaint Deleted', `${complaint.id} has been permanently removed.`);
+        onNavigate('/admin/complaints');
+        return;
+      }
+      setShowDeleteModal(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const catMeta = CATEGORY_METADATA[complaint.category] || {
     color: '#6B7280',
     description: '',
   };
 
   return (
-    <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+    <div style={{ maxWidth: '1120px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       {/* Top Bar */}
       <div
         style={{
@@ -186,14 +208,17 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.4rem',
-            padding: '6px 10px',
-            borderRadius: 'var(--radius-md)',
+            gap: '0.45rem',
+            padding: '8px 14px',
+            borderRadius: 'var(--radius-lg)',
             border: 'none',
+            background: 'var(--clay-btn-outline-bg)',
+            boxShadow: '0 2px 5px rgba(15, 23, 42, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.9)',
             color: 'var(--text-secondary)',
-            fontWeight: 600,
+            fontWeight: 700,
             fontSize: '0.875rem',
             cursor: 'pointer',
+            transition: 'all var(--transition-fast)',
           }}
         >
           <ArrowLeft size={16} />
@@ -201,20 +226,20 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
         </button>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Admin Action Console</span>
+          <span style={{ fontSize: '0.775rem', color: 'var(--text-muted)', fontWeight: 600 }}>Admin Action Console</span>
         </div>
       </div>
 
       {/* Main Header Card */}
-      <Card style={{ padding: '1.75rem', borderTop: `4px solid ${catMeta.color}` }}>
+      <Card style={{ padding: '2rem 2.25rem', borderLeft: `6px solid ${catMeta.color}` }}>
         <div
           style={{
             display: 'flex',
             flexWrap: 'wrap',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '0.75rem',
-            marginBottom: '1rem',
+            gap: '0.85rem',
+            marginBottom: '1.25rem',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -222,12 +247,13 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
               style={{
                 fontFamily: 'monospace',
                 fontSize: '1.1rem',
-                fontWeight: 800,
+                fontWeight: 900,
                 color: 'var(--pup-maroon)',
                 background: 'var(--pup-maroon-subtle)',
-                padding: '3px 10px',
+                padding: '4px 12px',
                 borderRadius: 'var(--radius-md)',
-                border: '1px solid rgba(122, 18, 40, 0.2)',
+                border: '1px solid rgba(122, 18, 40, 0.15)',
+                boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.9)',
               }}
             >
               {complaint.id}
@@ -235,12 +261,13 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
 
             <span
               style={{
-                fontSize: '0.8125rem',
-                fontWeight: 700,
+                fontSize: '0.825rem',
+                fontWeight: 800,
                 color: catMeta.color,
                 background: `${catMeta.color}15`,
-                padding: '3px 10px',
+                padding: '4px 12px',
                 borderRadius: 'var(--radius-full)',
+                boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.9)',
               }}
             >
               {complaint.category}
@@ -252,7 +279,7 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
           <StatusBadge status={complaint.status} />
         </div>
 
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.75rem', lineHeight: 1.3 }}>
+        <h1 style={{ fontSize: '1.65rem', fontWeight: 900, marginBottom: '0.85rem', lineHeight: 1.3, letterSpacing: '-0.02em' }}>
           {complaint.title}
         </h1>
 
@@ -261,34 +288,34 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '1rem',
-            padding: '1rem',
-            background: 'var(--bg-main)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-light)',
-            fontSize: '0.8125rem',
+            gap: '1.25rem',
+            padding: '1.25rem',
+            background: 'var(--clay-inset-bg)',
+            borderRadius: 'var(--radius-xl)',
+            boxShadow: 'var(--clay-inset-shadow)',
+            fontSize: '0.85rem',
           }}
         >
           <div>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Reported By Student</div>
-            <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginTop: '2px' }}>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 600 }}>Reported By Student</div>
+            <div style={{ fontWeight: 800, color: 'var(--text-primary)', marginTop: '2px' }}>
               {complaint.studentName}
             </div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+            <div style={{ color: 'var(--text-secondary)', fontSize: '0.775rem', marginTop: '1px' }}>
               {complaint.studentRollNo} • {complaint.studentDepartment}
             </div>
           </div>
 
           <div>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Target Location</div>
-            <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 600 }}>Target Location</div>
+            <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginTop: '2px' }}>
               {complaint.location}
             </div>
           </div>
 
           <div>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Date & Timeline</div>
-            <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 600 }}>Date & Timeline</div>
+            <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginTop: '2px' }}>
               {new Date(complaint.createdAt).toLocaleDateString([], {
                 month: 'short',
                 day: 'numeric',
@@ -305,17 +332,17 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-          gap: '1.5rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+          gap: '1.75rem',
         }}
       >
         {/* Left: Administrative Action Center */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
           {/* Status Update Controller */}
-          <Card style={{ padding: '1.5rem', border: '1.5px solid var(--pup-maroon)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1rem', color: 'var(--pup-maroon)' }}>
-              <Wrench size={18} />
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>
+          <Card style={{ padding: '1.75rem', border: '1.5px solid rgba(122, 18, 40, 0.2)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.15rem', color: 'var(--pup-maroon)' }}>
+              <Wrench size={20} strokeWidth={2.4} />
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 900, margin: 0, letterSpacing: '-0.01em' }}>
                 Update Complaint Status
               </h3>
             </div>
@@ -363,10 +390,10 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
           </Card>
 
           {/* Department & Officer Assignment Box */}
-          <Card style={{ padding: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1rem', color: 'var(--pup-navy)' }}>
-              <UserCheck size={18} />
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>
+          <Card style={{ padding: '1.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.15rem', color: 'var(--pup-navy)' }}>
+              <UserCheck size={20} strokeWidth={2.4} />
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 900, margin: 0, letterSpacing: '-0.01em' }}>
                 Assign Department & Lead Officer
               </h3>
             </div>
@@ -416,10 +443,10 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
         </div>
 
         {/* Right: Timeline & Comments */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
           {/* Timeline */}
-          <Card style={{ padding: '1.5rem' }}>
-            <h4 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '1rem' }}>
+          <Card style={{ padding: '1.75rem' }}>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '1.15rem', letterSpacing: '-0.01em' }}>
               Official Status History Log
             </h4>
             <Timeline
@@ -430,20 +457,20 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
           </Card>
 
           {/* Description & Attachments */}
-          <Card style={{ padding: '1.5rem' }}>
-            <h4 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+          <Card style={{ padding: '1.75rem' }}>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.65rem', letterSpacing: '-0.01em' }}>
               Student Problem Description
             </h4>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>
               {complaint.description}
             </p>
 
             {complaint.attachments.length > 0 && (
-              <div style={{ marginTop: '1rem' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+              <div style={{ marginTop: '1.25rem' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '0.6rem', letterSpacing: '0.04em' }}>
                   ATTACHED EVIDENCE
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
                   {complaint.attachments.map((att) => (
                     <img
                       key={att.id}
@@ -451,12 +478,13 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
                       alt={att.name}
                       onClick={() => setPreviewImage(att.url)}
                       style={{
-                        width: '80px',
-                        height: '80px',
-                        borderRadius: 'var(--radius-md)',
+                        width: '84px',
+                        height: '84px',
+                        borderRadius: 'var(--radius-lg)',
                         objectFit: 'cover',
                         cursor: 'pointer',
-                        border: '1px solid var(--border-light)',
+                        border: 'var(--clay-card-border)',
+                        boxShadow: 'var(--clay-card-shadow)',
                       }}
                     />
                   ))}
@@ -466,7 +494,7 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
           </Card>
 
           {/* Discussion / Internal Remarks Thread */}
-          <Card style={{ padding: '1.5rem' }}>
+          <Card style={{ padding: '1.75rem' }}>
             <CommentSection
               complaintId={complaint.id}
               comments={complaint.comments}
@@ -475,6 +503,61 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
           </Card>
         </div>
       </div>
+
+      {/* DANGER ZONE — Permanent Deletion */}
+      <Card
+        style={{
+          padding: '1.75rem',
+          border: '1.5px solid rgba(239, 68, 68, 0.3)',
+          background: 'linear-gradient(145deg, #FFFDFD 0%, #FEF2F2 100%)',
+          boxShadow: '0 8px 20px -3px rgba(220, 38, 38, 0.1), inset 0 1px 2px rgba(255, 255, 255, 1)',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+            <div
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: 'var(--radius-md)',
+                background: '#FEE2E2',
+                color: '#DC2626',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <AlertTriangle size={20} />
+            </div>
+            <div>
+              <h4 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: '#991B1B', letterSpacing: '-0.01em' }}>
+                Danger Zone
+              </h4>
+              <p style={{ fontSize: '0.825rem', color: '#B91C1C', margin: '0.25rem 0 0 0', lineHeight: 1.5 }}>
+                Permanently remove this complaint along with its comments, status history, and related
+                notifications. This action cannot be undone.
+              </p>
+            </div>
+          </div>
+
+          <Button
+            variant="danger"
+            onClick={() => setShowDeleteModal(true)}
+            leftIcon={<Trash2 size={16} />}
+          >
+            Delete Complaint
+          </Button>
+        </div>
+      </Card>
 
       {/* Image Preview Modal */}
       <Modal
@@ -486,9 +569,61 @@ export const AdminComplaintDetails: React.FC<AdminComplaintDetailsProps> = ({
           <img
             src={previewImage}
             alt="Attachment"
-            style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain' }}
+            style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: 'var(--radius-lg)' }}
           />
         )}
+      </Modal>
+
+      {/* Delete Confirmation Dialog */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          if (!isDeleting) setShowDeleteModal(false);
+        }}
+        title={
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Trash2 size={18} style={{ color: '#DC2626' }} />
+            Delete Complaint
+          </span>
+        }
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.75rem',
+            background: '#FEF2F2',
+            border: '1px solid #FCA5A5',
+            borderRadius: 'var(--radius-lg)',
+            padding: '1.15rem',
+            marginBottom: '0.75rem',
+          }}
+        >
+          <AlertTriangle size={22} style={{ color: '#DC2626', flexShrink: 0, marginTop: '2px' }} />
+          <div style={{ fontSize: '0.9rem', lineHeight: 1.55, color: '#991B1B' }}>
+            Are you sure you want to delete this complaint? This action cannot be undone.
+            {complaint && (
+              <div style={{ marginTop: '0.5rem', fontSize: '0.825rem' }}>
+                <strong>{complaint.id}</strong> — {complaint.title}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.25rem' }}>
+          <Button variant="outline" onClick={() => setShowDeleteModal(false)} disabled={isDeleting}>
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleConfirmDelete}
+            isLoading={isDeleting}
+            disabled={isDeleting}
+            leftIcon={!isDeleting ? <Trash2 size={15} /> : undefined}
+          >
+            {isDeleting ? 'Deleting...' : 'Delete Complaint'}
+          </Button>
+        </div>
       </Modal>
     </div>
   );

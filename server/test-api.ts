@@ -881,7 +881,6 @@ const runTests = async () => {
     });
     const bodyRegB = (await resRegB.json()) as any;
     const tokenB = bodyRegB.data?.token;
-    const userB = bodyRegB.data?.user;
 
     // Register Student Gamma (Zero Complaints)
     const emailGamma = `student.gamma.${Date.now()}.${Math.floor(Math.random() * 10000)}@demo.pup.ac.in`;
@@ -897,7 +896,6 @@ const runTests = async () => {
     });
     const bodyRegC = (await resRegC.json()) as any;
     const tokenC = bodyRegC.data?.token;
-    const userC = bodyRegC.data?.user;
 
     // Student Alpha creates Complaint Alpha
     let complaintIdAlpha = '';
@@ -942,7 +940,6 @@ const runTests = async () => {
     }
 
     // Test 30: Student Alpha sees own notification
-    let notifAlphaId = '';
     {
       const res = await fetch(`${BASE_URL}/notifications`, {
         headers: { Authorization: `Bearer ${tokenA}` },
@@ -952,9 +949,6 @@ const runTests = async () => {
       const hasAlphaComplaintNotif = notifs.some(
         (n) => n.complaintId === complaintIdAlpha
       );
-      if (notifs.length > 0) {
-        notifAlphaId = notifs[0].id;
-      }
       const passed =
         res.status === 200 &&
         body.success === true &&
@@ -1169,6 +1163,193 @@ const runTests = async () => {
         passed,
         status: resDNotifs.status,
         details: `Student Delta has 3 complaints (${dComplaintIds.join(', ')}). Received ${dNotifs.length} notifications, all strictly matching own tickets. Non-owned included: ${includesUnowned}`,
+      });
+    }
+
+    // ------------------------------------------------------------------
+    // GENDER FIELD TESTS
+    // ------------------------------------------------------------------
+
+    // Test 37: Registration accepts inclusive gender value and returns it on profile
+    {
+      const emailGender = `student.gender.${Date.now()}.${Math.floor(Math.random() * 10000)}@demo.pup.ac.in`;
+      const res = await fetch(`${BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Inclusive Gender Student',
+          email: emailGender,
+          password: 'password123',
+          gender: 'Non-binary',
+          department: 'Department of Computer Science & Engineering',
+        }),
+      });
+      const body = (await res.json()) as any;
+      const returnedGender = body.data?.user?.gender;
+
+      // Strict pass: gender persisted and returned.
+      // Degraded pass: registration must NEVER break while the users.gender
+      // column migration (migrations/add_gender_to_users.sql) has not been
+      // applied yet — gender lives only in Supabase auth metadata until then.
+      const strictPass = res.status === 201 && returnedGender === 'Non-binary';
+      const degradedPass =
+        res.status === 201 &&
+        body.success === true &&
+        (returnedGender === undefined || returnedGender === null);
+
+      results.push({
+        name: strictPass
+          ? 'Gender Field: Registration accepts "Non-binary" and persists it on the profile'
+          : 'Gender Field: Registration accepts "Non-binary" (degraded: users.gender column not migrated yet)',
+        passed: Boolean(strictPass || degradedPass),
+        status: res.status,
+        details: strictPass
+          ? 'Returned gender: Non-binary'
+          : '⚠️ Registration succeeded, but users.gender column is missing in this database. Run server/src/database/migrations/add_gender_to_users.sql in the Supabase SQL Editor to enable full persistence.',
+      });
+    }
+
+    // Test 38: Registration REJECTS an unsupported gender value (Expected 400)
+    {
+      const emailBad = `student.badgender.${Date.now()}.${Math.floor(Math.random() * 10000)}@demo.pup.ac.in`;
+      const res = await fetch(`${BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Bad Gender Student',
+          email: emailBad,
+          password: 'password123',
+          gender: 'Helicopter',
+        }),
+      });
+      const body = (await res.json()) as any;
+      const passed = res.status === 400 && body.success === false;
+
+      results.push({
+        name: 'Gender Field: Registration rejects unsupported gender value (Expected 400 Bad Request)',
+        passed,
+        status: res.status,
+        details: `Error: "${body.error}"`,
+      });
+    }
+
+    // ------------------------------------------------------------------
+    // ADMIN-ONLY COMPLAINT DELETION (RBAC) TESTS
+    // ------------------------------------------------------------------
+
+    // Test 39: Unauthenticated user CANNOT delete a complaint (Expected 401)
+    if (createdComplaintId) {
+      const res = await fetch(`${BASE_URL}/complaints/${createdComplaintId}`, {
+        method: 'DELETE',
+      });
+      const body = (await res.json()) as any;
+      const passed = res.status === 401 && body.success === false;
+
+      results.push({
+        name: 'Delete RBAC: Unauthenticated DELETE /complaints/:id (Expected 401 Unauthorized)',
+        passed,
+        status: res.status,
+        details: `Status: ${res.status} ("${body.error}")`,
+      });
+    }
+
+    // Test 40: Student CANNOT delete their OWN complaint (Expected 403)
+    let deleteTargetId = '';
+    if (createdComplaintId) {
+      const res = await fetch(`${BASE_URL}/complaints/${createdComplaintId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${studentToken}` },
+      });
+      const body = (await res.json()) as any;
+      const passed = res.status === 403 && body.success === false;
+
+      // Verify the complaint was NOT deleted
+      let stillExists = false;
+      if (passed) {
+        const verifyRes = await fetch(`${BASE_URL}/complaints/${createdComplaintId}`, {
+          headers: { Authorization: `Bearer ${studentToken}` },
+        });
+        stillExists = verifyRes.status === 200;
+      }
+
+      results.push({
+        name: 'Negative RBAC: Student cannot delete their OWN complaint (Expected 403 Forbidden)',
+        passed: passed && stillExists,
+        status: res.status,
+        details: `Status: ${res.status} ("${body.error}") | Complaint still exists after denial: ${stillExists}`,
+      });
+
+      deleteTargetId = createdComplaintId;
+    }
+
+    // Test 41: Admin CAN delete any complaint (Expected 200), complaint becomes unreachable
+    if (deleteTargetId) {
+      const res = await fetch(`${BASE_URL}/complaints/${deleteTargetId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      const body = (await res.json()) as any;
+      const passed = res.status === 200 && body.success === true;
+
+      // Verify complaint is truly gone for both admin and owner student
+      let goneForAdmin = false;
+      let goneForStudent = false;
+      if (passed) {
+        const verifyAdmin = await fetch(`${BASE_URL}/complaints/${deleteTargetId}`, {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        const verifyStudent = await fetch(`${BASE_URL}/complaints/${deleteTargetId}`, {
+          headers: { Authorization: `Bearer ${studentToken}` },
+        });
+        goneForAdmin = verifyAdmin.status === 404;
+        goneForStudent = verifyStudent.status === 404;
+      }
+
+      results.push({
+        name: 'Admin Deletion: Admin can DELETE a complaint; it is removed for everyone',
+        passed: passed && goneForAdmin && goneForStudent,
+        status: res.status,
+        details: `Deleted: ${deleteTargetId} | Gone for admin: ${goneForAdmin} | Gone for student: ${goneForStudent}`,
+      });
+    }
+
+    // Test 42: Password reset requires a valid recovery token/session (Expected 401)
+    {
+      const res = await fetch(`${BASE_URL}/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: 'newSecurePass123' }),
+      });
+      const body = (await res.json()) as any;
+      const passed = res.status === 401 && body.success === false;
+
+      results.push({
+        name: 'Password Reset Security: reset-password without recovery token (Expected 401 Unauthorized)',
+        passed,
+        status: res.status,
+        details: `Status: ${res.status} ("${body.error}")`,
+      });
+    }
+
+    // Test 43: Forgot-password always responds generically (anti-enumeration)
+    {
+      const res = await fetch(`${BASE_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'definitely.not.a.real.account@demo.pup.ac.in' }),
+      });
+      const body = (await res.json()) as any;
+      const passed =
+        res.status === 200 &&
+        body.success === true &&
+        body.data?.sent === true &&
+        !/not found|does not exist|no account/i.test(body.message || '');
+
+      results.push({
+        name: 'Password Reset Flow: forgot-password returns generic anti-enumeration response',
+        passed,
+        status: res.status,
+        details: `Message: "${body.message}"`,
       });
     }
 

@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS users (
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('student', 'admin', 'faculty')),
+  gender TEXT CHECK (gender IN ('Male', 'Female', 'Non-binary', 'Prefer not to say', 'Other')),
   roll_no TEXT,
   department TEXT NOT NULL,
   hostel TEXT,

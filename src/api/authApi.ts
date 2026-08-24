@@ -1,5 +1,5 @@
 import { apiClient, setAuthToken } from './apiClient';
-import type { User, UserRole } from '../types';
+import type { User, UserRole, Gender } from '../types';
 
 export interface AuthResult {
   user: User;
@@ -13,6 +13,7 @@ export interface RegisterPayload {
   email: string;
   password?: string;
   rollNo?: string;
+  gender?: Gender;
   department?: string;
   hostel?: string;
   phone?: string;
@@ -33,6 +34,7 @@ export const authApi = {
       email: payload.email,
       password: payload.password || 'password123',
       rollNo: payload.rollNo,
+      gender: payload.gender,
       department: payload.department,
       hostel: payload.hostel,
       phone: payload.phone,

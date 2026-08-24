@@ -68,6 +68,18 @@ export class NotificationService {
     }
     return allOk;
   }
+
+  /**
+   * Remove every notification tied to a deleted complaint. Accepts multiple
+   * identifier forms (human-readable code and/or UUID) because notification
+   * rows may reference either. Called after a complaint has been deleted.
+   */
+  public async deleteNotificationsForComplaint(
+    ...complaintIds: string[]
+  ): Promise<void> {
+    const repo = getNotificationRepository();
+    await repo.deleteByComplaint(complaintIds);
+  }
 }
 
 export const notificationService = new NotificationService();

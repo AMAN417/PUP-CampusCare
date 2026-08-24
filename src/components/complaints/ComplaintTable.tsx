@@ -6,6 +6,7 @@ import {
   ArrowUpDown,
   Eye,
   MapPin,
+  Trash2,
 } from 'lucide-react';
 import { EmptyState } from '../common/EmptyState';
 
@@ -14,6 +15,7 @@ interface ComplaintTableProps {
   onOpenComplaint: (id: string) => void;
   onQuickStatusChange?: (id: string, newStatus: ComplaintStatus) => void;
   onExportCSV?: () => void;
+  onDeleteComplaint?: (complaint: Complaint) => void;
 }
 
 type SortField = 'id' | 'createdAt' | 'priority' | 'status' | 'category';
@@ -22,6 +24,7 @@ type SortOrder = 'asc' | 'desc';
 export const ComplaintTable: React.FC<ComplaintTableProps> = ({
   complaints,
   onOpenComplaint,
+  onDeleteComplaint,
 }) => {
   const [sortField, setSortField] = useState<SortField>('createdAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
@@ -287,14 +290,35 @@ export const ComplaintTable: React.FC<ComplaintTableProps> = ({
                     })}
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onOpenComplaint(c.id)}
-                      rightIcon={<Eye size={13} />}
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
+                        gap: '0.4rem',
+                      }}
                     >
-                      View
-                    </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onOpenComplaint(c.id)}
+                        rightIcon={<Eye size={13} />}
+                      >
+                        View
+                      </Button>
+                      {onDeleteComplaint && (
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => onDeleteComplaint(c)}
+                          leftIcon={<Trash2 size={13} />}
+                          aria-label={`Delete complaint ${c.id}`}
+                          title="Delete Complaint"
+                        >
+                          Delete
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );

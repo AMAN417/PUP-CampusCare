@@ -80,7 +80,7 @@ export const MyComplaints: React.FC<MyComplaintsProps> = ({ onNavigate, initialT
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       {/* Header & Quick Action */}
       <div
         style={{
@@ -92,8 +92,8 @@ export const MyComplaints: React.FC<MyComplaintsProps> = ({ onNavigate, initialT
         }}
       >
         <div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800 }}>My Reported Complaints</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem', marginTop: '0.2rem' }}>
+          <h2 style={{ fontSize: '1.95rem', fontWeight: 900, letterSpacing: '-0.025em' }}>My Reported Complaints</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginTop: '0.25rem' }}>
             Monitor lifecycle status, field assignments, and officer updates in real time.
           </p>
         </div>
@@ -101,18 +101,21 @@ export const MyComplaints: React.FC<MyComplaintsProps> = ({ onNavigate, initialT
         <Button
           variant="primary"
           onClick={() => onNavigate('/student/submit')}
-          leftIcon={<PlusCircle size={18} />}
+          leftIcon={<PlusCircle size={19} />}
         >
           Submit New Complaint
         </Button>
       </div>
 
-      {/* Tabs Row */}
+      {/* Clay Tabs Row */}
       <div
         style={{
           display: 'flex',
-          borderBottom: '1px solid var(--border-light)',
-          gap: '0.5rem',
+          background: 'var(--clay-inset-bg)',
+          padding: '4px',
+          borderRadius: 'var(--radius-xl)',
+          boxShadow: 'var(--clay-inset-shadow)',
+          gap: '0.35rem',
           overflowX: 'auto',
         }}
       >
@@ -132,13 +135,14 @@ export const MyComplaints: React.FC<MyComplaintsProps> = ({ onNavigate, initialT
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.75rem 1rem',
-                background: 'none',
+                gap: '0.5rem',
+                padding: '0.65rem 1.15rem',
+                background: isActive ? '#FFFFFF' : 'transparent',
+                borderRadius: 'var(--radius-lg)',
                 border: 'none',
-                borderBottom: `2.5px solid ${isActive ? 'var(--pup-maroon)' : 'transparent'}`,
+                boxShadow: isActive ? '0 4px 10px rgba(15, 23, 42, 0.08), inset 0 1px 1px rgba(255, 255, 255, 1)' : 'none',
                 color: isActive ? 'var(--pup-maroon)' : 'var(--text-secondary)',
-                fontWeight: isActive ? 700 : 500,
+                fontWeight: isActive ? 800 : 600,
                 fontSize: '0.875rem',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
@@ -148,10 +152,10 @@ export const MyComplaints: React.FC<MyComplaintsProps> = ({ onNavigate, initialT
               <span>{tab.label}</span>
               <span
                 style={{
-                  background: isActive ? 'var(--pup-maroon-subtle)' : 'var(--bg-main)',
+                  background: isActive ? 'var(--pup-maroon-subtle)' : 'rgba(15, 23, 42, 0.06)',
                   color: isActive ? 'var(--pup-maroon)' : 'var(--text-muted)',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
+                  fontSize: '0.725rem',
+                  fontWeight: 800,
                   padding: '2px 7px',
                   borderRadius: 'var(--radius-full)',
                 }}
@@ -173,7 +177,7 @@ export const MyComplaints: React.FC<MyComplaintsProps> = ({ onNavigate, initialT
           gap: '1rem',
         }}
       >
-        <div style={{ flex: 1, minWidth: '260px' }}>
+        <div style={{ flex: 1, minWidth: '280px' }}>
           <SearchBar
             value={searchQuery}
             onChange={setSearchQuery}
@@ -181,7 +185,7 @@ export const MyComplaints: React.FC<MyComplaintsProps> = ({ onNavigate, initialT
           />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           <FilterBar
             filters={filters}
             onFilterChange={setFilters}
@@ -192,10 +196,10 @@ export const MyComplaints: React.FC<MyComplaintsProps> = ({ onNavigate, initialT
           <div
             style={{
               display: 'flex',
-              background: 'var(--bg-main)',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-light)',
-              padding: '2px',
+              background: 'var(--clay-inset-bg)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--clay-inset-shadow)',
+              padding: '3px',
             }}
           >
             <button
@@ -204,8 +208,9 @@ export const MyComplaints: React.FC<MyComplaintsProps> = ({ onNavigate, initialT
               style={{
                 background: viewMode === 'grid' ? '#FFFFFF' : 'transparent',
                 border: 'none',
-                borderRadius: 'var(--radius-sm)',
-                padding: '6px 8px',
+                borderRadius: 'var(--radius-md)',
+                boxShadow: viewMode === 'grid' ? '0 2px 5px rgba(15, 23, 42, 0.08)' : 'none',
+                padding: '6px 10px',
                 cursor: 'pointer',
                 color: viewMode === 'grid' ? 'var(--pup-maroon)' : 'var(--text-muted)',
                 display: 'flex',
@@ -213,7 +218,7 @@ export const MyComplaints: React.FC<MyComplaintsProps> = ({ onNavigate, initialT
               }}
               aria-label="Grid view"
             >
-              <LayoutGrid size={16} />
+              <LayoutGrid size={17} />
             </button>
             <button
               type="button"
@@ -221,8 +226,9 @@ export const MyComplaints: React.FC<MyComplaintsProps> = ({ onNavigate, initialT
               style={{
                 background: viewMode === 'table' ? '#FFFFFF' : 'transparent',
                 border: 'none',
-                borderRadius: 'var(--radius-sm)',
-                padding: '6px 8px',
+                borderRadius: 'var(--radius-md)',
+                boxShadow: viewMode === 'table' ? '0 2px 5px rgba(15, 23, 42, 0.08)' : 'none',
+                padding: '6px 10px',
                 cursor: 'pointer',
                 color: viewMode === 'table' ? 'var(--pup-maroon)' : 'var(--text-muted)',
                 display: 'flex',
@@ -230,7 +236,7 @@ export const MyComplaints: React.FC<MyComplaintsProps> = ({ onNavigate, initialT
               }}
               aria-label="Table view"
             >
-              <List size={16} />
+              <List size={17} />
             </button>
           </div>
         </div>
@@ -248,15 +254,18 @@ export const MyComplaints: React.FC<MyComplaintsProps> = ({ onNavigate, initialT
               : 'No complaints match your current search and filter settings.'
           }
           actionText={studentComplaints.length === 0 ? 'Report an Issue' : 'Reset Filters'}
-          onAction={studentComplaints.length === 0 ? () => onNavigate('/student/submit') : handleResetFilters}
-          actionIcon={<PlusCircle size={16} />}
+          onAction={() => {
+            if (studentComplaints.length === 0) onNavigate('/student/submit');
+            else handleResetFilters();
+          }}
+          actionIcon={studentComplaints.length === 0 ? <PlusCircle size={16} /> : undefined}
         />
       ) : viewMode === 'grid' ? (
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))',
-            gap: '1.25rem',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gap: '1.35rem',
           }}
         >
           {filteredComplaints.map((complaint) => (

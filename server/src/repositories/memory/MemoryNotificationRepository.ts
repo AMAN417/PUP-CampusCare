@@ -108,4 +108,23 @@ export class MemoryNotificationRepository implements INotificationRepository {
     notif.read = true;
     return true;
   }
+
+  public async deleteByComplaint(complaintIds: string[]): Promise<boolean> {
+    const identifiers = new Set(
+      (complaintIds || [])
+        .filter((id) => typeof id === 'string' && id.trim().length > 0)
+        .map((id) => id.trim().toUpperCase())
+    );
+
+    if (identifiers.size === 0) return true;
+
+    // Keep broadcast/general notifications; remove only those tied to the
+    // deleted complaint (matching any of the provided identifier forms).
+    this.notifications = this.notifications.filter(
+      (n) =>
+        !n.complaintId ||
+        !identifiers.has(String(n.complaintId).trim().toUpperCase())
+    );
+    return true;
+  }
 }

@@ -3,6 +3,7 @@ import {
   VALID_CATEGORIES,
   VALID_STATUSES,
   VALID_PRIORITIES,
+  VALID_GENDERS,
   ComplaintCategory,
   ComplaintStatus,
   Priority,
@@ -193,7 +194,7 @@ export const validateRegister = (
   _res: Response,
   next: NextFunction
 ): void => {
-  const { name, email, password } = req.body;
+  const { name, email, password, gender } = req.body;
   const errors: string[] = [];
 
   if (!name || typeof name !== 'string' || name.trim().length < 2) {
@@ -214,6 +215,11 @@ export const validateRegister = (
     password.length < 6
   ) {
     errors.push('Field "password" is required and must be at least 6 characters.');
+  }
+
+  // Optional, inclusive field — validated strictly when provided
+  if (gender !== undefined && gender !== null && !VALID_GENDERS.includes(gender)) {
+    errors.push(`Field "gender" must be one of: ${VALID_GENDERS.join(', ')}.`);
   }
 
   if (errors.length > 0) {

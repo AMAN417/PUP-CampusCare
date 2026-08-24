@@ -1,7 +1,7 @@
 import { config, getDataProvider, isSupabaseConfigured } from '../config/environment.js';
 import { getSupabaseClient } from '../database/supabaseClient.js';
 import { getUserRepository } from '../repositories/index.js';
-import { User, UserRole, AuthResponseData } from '../types/index.js';
+import { User, UserRole, Gender, AuthResponseData } from '../types/index.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 export interface RegisterInput {
@@ -9,6 +9,7 @@ export interface RegisterInput {
   email: string;
   password: string;
   rollNo?: string;
+  gender?: Gender;
   department?: string;
   hostel?: string;
   phone?: string;
@@ -63,6 +64,7 @@ export class AuthService {
         user_metadata: {
           name: input.name,
           role,
+          gender: input.gender || null,
           roll_no: input.rollNo || null,
           department: input.department || 'General',
           hostel: input.hostel || null,
@@ -92,6 +94,7 @@ export class AuthService {
           name: input.name,
           email,
           role,
+          gender: input.gender,
           rollNo: input.rollNo,
           department: input.department || 'General',
           hostel: input.hostel,
@@ -105,6 +108,7 @@ export class AuthService {
           name: input.name,
           email,
           role,
+          gender: input.gender,
           rollNo: input.rollNo,
           department: input.department || 'General',
           hostel: input.hostel,
@@ -147,6 +151,7 @@ export class AuthService {
       name: input.name,
       email,
       role,
+      gender: input.gender,
       rollNo: input.rollNo,
       department: input.department || 'Computer Science & Engineering',
       hostel: input.hostel,
@@ -500,6 +505,7 @@ export class AuthService {
             name: metadata.name || authUser.email?.split('@')[0] || 'Campus User',
             email: authUser.email || '',
             role: (metadata.role as UserRole) || (authUser.email?.includes('admin') ? 'admin' : 'student'),
+            gender: (metadata.gender as Gender) || undefined,
             department: metadata.department || 'General',
             rollNo: metadata.roll_no,
             hostel: metadata.hostel,

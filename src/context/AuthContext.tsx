@@ -115,6 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: userData.email || `student.${Date.now()}@demo.pup.ac.in`,
         password,
         rollNo: userData.rollNo,
+        gender: userData.gender,
         department: userData.department,
         hostel: userData.hostel,
         phone: userData.phone,

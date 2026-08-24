@@ -278,6 +278,40 @@ export const storage = {
     return complaint;
   },
 
+  // Partially update editable fields of a complaint (student edit flow)
+  updateComplaintFields: (
+    complaintId: string,
+    updates: Partial<
+      Pick<Complaint, 'title' | 'description' | 'category' | 'priority' | 'location'>
+    >
+  ): Complaint | null => {
+    const complaints = storage.getComplaints();
+    const index = complaints.findIndex(
+      (c) => c.id.toLowerCase() === complaintId.toLowerCase()
+    );
+    if (index === -1) return null;
+
+    const updated: Complaint = {
+      ...complaints[index],
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    complaints[index] = updated;
+    saveToStorage(STORAGE_KEYS.COMPLAINTS, complaints);
+    return updated;
+  },
+
+  removeComplaint: (complaintId: string): boolean => {
+    const complaints = storage.getComplaints();
+    const index = complaints.findIndex(
+      (c) => c.id.toLowerCase() === complaintId.toLowerCase()
+    );
+    if (index === -1) return false;
+    complaints.splice(index, 1);
+    saveToStorage(STORAGE_KEYS.COMPLAINTS, complaints);
+    return true;
+  },
+
   addComment: (
     complaintId: string,
     user: User,
@@ -422,29 +456,45 @@ export const storage = {
       'Last Updated',
     ];
 
-    const rows = complaints.map((c) => [
-      `"${c.id}"`,
-      `"${(c.title || '').replace(/"/g, '""')}"`,
-      `"${c.category}"`,
-      `"${c.status}"`,
-      `"${c.priority}"`,
-      `"${(c.location || '').replace(/"/g, '""')}"`,
-      `"${c.studentName || ''}"`,
-      `"${c.studentRollNo || ''}"`,
-      `"${c.studentDepartment || ''}"`,
-      `"${c.assignedTo || 'Unassigned'}"`,
-      `"${c.assignedDepartment || 'None'}"`,
-      `"${new Date(c.createdAt).toLocaleString()}"`,
-      `"${new Date(c.updatedAt).toLocaleString()}"`,
-    ]);
+    // Escape a field for CSV: wrap in quotes and double up inner quotes so
+    // commas, newlines, and quote characters cannot break the row structure.
+    const escapeCsvField = (value: unknown): string => {
+      const str = value === null || value === undefined ? '' : String(value);
+      return `"${str.replace(/"/g, '""')}"`;
+    };
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const rows = complaints.map((c) =>
+      [
+        c.id,
+        c.title,
+        c.category,
+        c.status,
+        c.priority,
+        c.location,
+        c.studentName,
+        c.studentRollNo,
+        c.studentDepartment,
+        c.assignedTo || 'Unassigned',
+        c.assignedDepartment || 'None',
+        new Date(c.createdAt).toLocaleString(),
+        new Date(c.updatedAt).toLocaleString(),
+      ]
+        .map(escapeCsvField)
+        .join(',')
+    );
+
+    const csvContent = [headers.map(escapeCsvField).join(','), ...rows].join('\r\n');
+
+    // Use a Blob instead of a data: URI — data URIs silently truncate on
+    // characters like '#' and cannot represent arbitrary user content.
+    const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
+    const blobUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.setAttribute('href', blobUrl);
     link.setAttribute('download', `PUP_CampusCare_Complaints_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(blobUrl);
   },
 };

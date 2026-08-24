@@ -88,7 +88,7 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       {/* Header */}
       <div
         style={{
@@ -100,8 +100,8 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
         }}
       >
         <div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Campus User Management</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem', marginTop: '0.2rem' }}>
+          <h2 style={{ fontSize: '1.95rem', fontWeight: 900, letterSpacing: '-0.025em' }}>Campus User Management</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginTop: '0.25rem' }}>
             Manage registered students, faculty members, and campus administrative maintenance officers.
           </p>
         </div>
@@ -109,7 +109,7 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
         <Button
           variant="primary"
           onClick={() => setShowAddModal(true)}
-          leftIcon={<UserPlus size={16} />}
+          leftIcon={<UserPlus size={18} />}
         >
           Add Demo User
         </Button>
@@ -134,7 +134,18 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
         </div>
 
         {/* Role Filter Tabs */}
-        <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-surface)', padding: '3px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)', overflowX: 'auto', maxWidth: '100%' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '0.35rem',
+            background: 'var(--clay-inset-bg)',
+            padding: '4px',
+            borderRadius: 'var(--radius-xl)',
+            boxShadow: 'var(--clay-inset-shadow)',
+            overflowX: 'auto',
+            maxWidth: '100%',
+          }}
+        >
           {(['ALL', 'student', 'admin', 'faculty'] as (UserRole | 'ALL')[]).map((r) => {
             const isActive = roleFilter === r;
             const labels: Record<string, string> = {
@@ -150,14 +161,16 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
                 onClick={() => setRoleFilter(r)}
                 style={{
                   border: 'none',
-                  background: isActive ? 'var(--pup-maroon)' : 'transparent',
-                  color: isActive ? '#FFFFFF' : 'var(--text-secondary)',
-                  fontWeight: 600,
-                  fontSize: '0.8125rem',
-                  padding: '5px 12px',
-                  borderRadius: 'var(--radius-sm)',
+                  background: isActive ? '#FFFFFF' : 'transparent',
+                  color: isActive ? 'var(--pup-maroon)' : 'var(--text-secondary)',
+                  fontWeight: isActive ? 800 : 600,
+                  fontSize: '0.825rem',
+                  padding: '6px 14px',
+                  borderRadius: 'var(--radius-lg)',
+                  boxShadow: isActive ? '0 2px 6px rgba(15, 23, 42, 0.08)' : 'none',
                   cursor: 'pointer',
                   transition: 'all var(--transition-fast)',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {labels[r]}
@@ -186,17 +199,17 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
               {filteredUsers.map((u) => (
                 <tr key={u.id}>
                   <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                       <img
                         src={u.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'}
                         alt={u.name}
-                        style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
+                        style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.9)', boxShadow: '0 2px 6px rgba(15, 23, 42, 0.1)' }}
                       />
                       <div>
-                        <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{u.name}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.email}</div>
+                        <div style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{u.name}</div>
+                        <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>{u.email}</div>
                         {u.rollNo && (
-                          <div style={{ fontSize: '0.7rem', color: 'var(--pup-maroon)', fontWeight: 600 }}>
+                          <div style={{ fontSize: '0.725rem', color: 'var(--pup-maroon)', fontWeight: 700 }}>
                             Roll: {u.rollNo}
                           </div>
                         )}
@@ -206,9 +219,9 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
                   <td>
                     <span
                       style={{
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        padding: '2px 8px',
+                        fontSize: '0.725rem',
+                        fontWeight: 800,
+                        padding: '3px 10px',
                         borderRadius: 'var(--radius-full)',
                         background:
                           u.role === 'admin'
@@ -223,6 +236,7 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
                             ? 'var(--pup-maroon)'
                             : '#B45309',
                         textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
                       }}
                     >
                       {u.role}
@@ -230,22 +244,22 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
                   </td>
                   <td>{u.department}</td>
                   <td>
-                    <div style={{ fontSize: '0.8125rem' }}>
+                    <div style={{ fontSize: '0.825rem' }}>
                       {u.phone && <div>{u.phone}</div>}
                       {u.hostel && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.hostel}</div>}
                     </div>
                   </td>
-                  <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  <td style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>
                     {u.joinedDate || '2024'}
                   </td>
                   <td>
                     <span
                       style={{
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
+                        fontSize: '0.725rem',
+                        fontWeight: 700,
                         color: u.status === 'Active' ? '#059669' : '#64748B',
                         background: u.status === 'Active' ? '#ECFDF5' : '#F1F5F9',
-                        padding: '2px 8px',
+                        padding: '3px 9px',
                         borderRadius: 'var(--radius-full)',
                       }}
                     >
@@ -254,7 +268,7 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
                   </td>
                   <td style={{ textAlign: 'right' }}>
                     <Button
-                      variant="outline"
+                      variant={u.status === 'Active' ? 'outline' : 'primary'}
                       size="sm"
                       onClick={() => toggleUserStatus(u.id)}
                     >
@@ -272,7 +286,7 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        title="Add Campus User (Demo)"
+        title="Add Campus Demo User"
       >
         <form onSubmit={handleAddUser}>
           <div className="form-group">
@@ -294,22 +308,35 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
               className="form-input"
               value={newUser.email}
               onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-              placeholder="name@demo.pup.ac.in"
+              placeholder="name@pup.ac.in"
               required
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Role</label>
-            <select
-              className="form-select"
-              value={newUser.role}
-              onChange={(e) => setNewUser({ ...newUser, role: e.target.value as UserRole })}
-            >
-              <option value="student">Student</option>
-              <option value="admin">Staff / Admin Officer</option>
-              <option value="faculty">Faculty Member</option>
-            </select>
+          <div className="form-grid-2">
+            <div className="form-group">
+              <label className="form-label">Role</label>
+              <select
+                className="form-select"
+                value={newUser.role}
+                onChange={(e) => setNewUser({ ...newUser, role: e.target.value as UserRole })}
+              >
+                <option value="student">Student</option>
+                <option value="faculty">Faculty</option>
+                <option value="admin">Administrator / Maintenance Staff</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Roll No. / Staff ID</label>
+              <input
+                type="text"
+                className="form-input"
+                value={newUser.rollNo}
+                onChange={(e) => setNewUser({ ...newUser, rollNo: e.target.value })}
+                placeholder="e.g. PUP2026-CS-012"
+              />
+            </div>
           </div>
 
           <div className="form-group">
@@ -323,21 +350,8 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
             />
           </div>
 
-          {newUser.role === 'student' && (
-            <div className="form-group">
-              <label className="form-label">Roll Number</label>
-              <input
-                type="text"
-                className="form-input"
-                value={newUser.rollNo}
-                onChange={(e) => setNewUser({ ...newUser, rollNo: e.target.value })}
-                placeholder="PUP2026-CS-099"
-              />
-            </div>
-          )}
-
           <div className="form-group">
-            <label className="form-label">Phone</label>
+            <label className="form-label">Phone Number</label>
             <input
               type="tel"
               className="form-input"
@@ -347,7 +361,7 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
             />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.25rem' }}>
             <Button
               type="button"
               variant="outline"
@@ -355,7 +369,10 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
             >
               Cancel
             </Button>
-            <Button type="submit" variant="primary">
+            <Button
+              type="submit"
+              variant="primary"
+            >
               Create User
             </Button>
           </div>

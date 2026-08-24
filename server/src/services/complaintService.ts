@@ -88,26 +88,35 @@ export class ComplaintService {
 
   public async deleteComplaint(
     id: string,
-    userId: string,
+    _userId: string,
     userRole: string
   ): Promise<void> {
-    const complaint = await this.getById(id);
-
-    // Students can only delete their own complaints
-    if (userRole === 'student') {
-      const isOwner =
-        complaint.studentId === userId ||
-        // Demo seed fallback
-        (complaint.studentName && complaint.studentId === 'user-student-1' && userId === 'user-student-1');
-      if (!isOwner) {
-        throw new AppError('Access denied: You can only delete your own complaints.', 403);
-      }
+    // RBAC: deletion is strictly admin-only. Students (and any non-admin role)
+    // are rejected with 403 regardless of ownership. The role here comes from
+    // the verified server-side session — never from a frontend payload.
+    if (userRole !== 'admin') {
+      throw new AppError('Access denied: Only administrators can delete complaints.', 403);
     }
+
+    const complaint = await this.getById(id);
 
     const repo = getComplaintRepository();
     const deleted = await repo.delete(id);
     if (!deleted) {
       throw new AppError(`Failed to delete complaint '${id}'. It may no longer exist.`, 404);
+    }
+
+    // Related data handling:
+    //   * comments + status history — removed automatically by the database via
+    //     ON DELETE CASCADE foreign keys on complaints(id).
+    //   * attachments — stored as JSONB inside the complaints row, removed with it.
+    //   * notifications — plain-text complaint_id with NO FK, so they must be
+    //     cleaned up explicitly. Best-effort: a failure here leaves harmless
+    //     orphan rows and must not fail an already-successful deletion.
+    try {
+      await notificationService.deleteNotificationsForComplaint(complaint.id, id);
+    } catch (err) {
+      console.warn(`[ComplaintService] Notification cleanup failed for deleted complaint '${id}':`, err);
     }
   }
 

@@ -86,7 +86,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
   const maxMonthVal = Math.max(...monthlyTrends.map((m) => m.count));
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2.25rem' }}>
       {/* Header */}
       <div
         style={{
@@ -98,8 +98,8 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
         }}
       >
         <div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Campus Care Analytics</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem', marginTop: '0.2rem' }}>
+          <h2 style={{ fontSize: '1.95rem', fontWeight: 900, letterSpacing: '-0.025em' }}>Campus Care Analytics</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginTop: '0.25rem' }}>
             Resolution efficiency, category distribution, and department SLA compliance metrics.
           </p>
         </div>
@@ -118,34 +118,34 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '1.25rem',
+          gap: '1.35rem',
         }}
       >
         <StatCard
           label="Total Logged Issues"
           value={total}
-          icon={<Layers size={22} />}
+          icon={<Layers size={24} strokeWidth={2.4} />}
           iconBg="var(--pup-maroon-subtle)"
           iconColor="var(--pup-maroon)"
         />
         <StatCard
           label="Resolution Success Rate"
           value={`${resolutionRate}%`}
-          icon={<CheckCircle2 size={22} />}
+          icon={<CheckCircle2 size={24} strokeWidth={2.4} />}
           iconBg="#ECFDF5"
           iconColor="#059669"
         />
         <StatCard
           label="Avg Resolution Time"
           value="18.4 hrs"
-          icon={<Clock size={22} />}
+          icon={<Clock size={24} strokeWidth={2.4} />}
           iconBg="#FEF3C7"
           iconColor="#D97706"
         />
         <StatCard
           label="Active Campus Wings"
           value={DEMO_DEPARTMENTS.length}
-          icon={<Shield size={22} />}
+          icon={<Shield size={24} strokeWidth={2.4} />}
           iconBg="var(--pup-navy-subtle)"
           iconColor="var(--pup-navy)"
         />
@@ -155,17 +155,17 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-          gap: '1.5rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+          gap: '1.75rem',
         }}
       >
         {/* Category Distribution Bar Chart */}
-        <Card style={{ padding: '1.75rem' }}>
+        <Card style={{ padding: '2rem' }}>
           <CardHeader
             title="Complaints by Category"
             subtitle="Volume share across campus infrastructure divisions"
           />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem', marginTop: '1.25rem' }}>
             {categoryCounts.map((item) => (
               <div key={item.category}>
                 <div
@@ -173,23 +173,24 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    fontSize: '0.8125rem',
-                    fontWeight: 600,
-                    marginBottom: '0.35rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    marginBottom: '0.4rem',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span
                       style={{
-                        width: '10px',
-                        height: '10px',
-                        borderRadius: '2px',
+                        width: '12px',
+                        height: '12px',
+                        borderRadius: 'var(--radius-sm)',
                         background: item.color,
+                        boxShadow: `0 2px 5px ${item.color}40`,
                       }}
                     />
                     <span>{item.category}</span>
                   </div>
-                  <div style={{ color: 'var(--text-muted)' }}>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                     <strong>{item.count}</strong> tickets ({item.percent}%)
                   </div>
                 </div>
@@ -197,9 +198,10 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
                 <div
                   style={{
                     width: '100%',
-                    height: '8px',
-                    background: 'var(--bg-main)',
+                    height: '10px',
+                    background: 'var(--clay-inset-bg)',
                     borderRadius: 'var(--radius-full)',
+                    boxShadow: 'var(--clay-inset-shadow)',
                     overflow: 'hidden',
                   }}
                 >
@@ -209,6 +211,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
                       width: `${Math.max(item.percent, 4)}%`,
                       background: item.color,
                       borderRadius: 'var(--radius-full)',
+                      boxShadow: `0 1px 4px ${item.color}60`,
                       transition: 'width 0.6s ease',
                     }}
                   />
@@ -219,38 +222,38 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
         </Card>
 
         {/* Complaints By Status Pipeline */}
-        <Card style={{ padding: '1.75rem' }}>
+        <Card style={{ padding: '2rem' }}>
           <CardHeader
             title="Complaints by Lifecycle Status"
             subtitle="Current distribution across processing phases"
           />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem', marginTop: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.25rem' }}>
             {statusCounts.map((item) => (
               <div
                 key={item.status}
                 style={{
-                  padding: '0.85rem 1rem',
-                  background: 'var(--bg-main)',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border-light)',
+                  padding: '1rem 1.25rem',
+                  background: 'var(--clay-inset-bg)',
+                  borderRadius: 'var(--radius-xl)',
+                  boxShadow: 'var(--clay-inset-shadow)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  <div style={{ fontSize: '0.925rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                     {item.status}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)', fontWeight: 500 }}>
                     {item.percent}% of active database
                   </div>
                 </div>
 
                 <div
                   style={{
-                    fontSize: '1.25rem',
-                    fontWeight: 800,
+                    fontSize: '1.4rem',
+                    fontWeight: 900,
                     fontFamily: 'var(--font-heading)',
                     color: 'var(--pup-maroon)',
                   }}
@@ -264,7 +267,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
       </div>
 
       {/* Monthly Volume Trend Timeline */}
-      <Card style={{ padding: '1.75rem' }}>
+      <Card style={{ padding: '2rem' }}>
         <CardHeader
           title="Monthly Complaint Volume Trend"
           subtitle="Total issues reported vs resolved over past 6 months"
@@ -273,10 +276,10 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
-            gap: '1.25rem',
-            marginTop: '2rem',
+            gap: '1.5rem',
+            marginTop: '2.5rem',
             alignItems: 'flex-end',
-            minHeight: '200px',
+            minHeight: '220px',
             paddingBottom: '0.5rem',
           }}
         >
@@ -291,63 +294,65 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '0.5rem',
+                  gap: '0.65rem',
                   height: '100%',
                   justifyContent: 'flex-end',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: '140px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '150px' }}>
                   {/* Total Bar */}
                   <div
                     title={`${t.count} Total`}
                     style={{
-                      width: '24px',
+                      width: '26px',
                       height: `${Math.max(heightPercent, 10)}%`,
-                      background: 'var(--pup-maroon)',
-                      borderRadius: '4px 4px 0 0',
+                      background: 'var(--pup-maroon-clay)',
+                      borderRadius: '6px 6px 0 0',
+                      boxShadow: '0 4px 10px rgba(122, 18, 40, 0.3), inset 0 1px 1px rgba(255,255,255,0.4)',
                     }}
                   />
                   {/* Resolved Bar */}
                   <div
                     title={`${t.resolved} Resolved`}
                     style={{
-                      width: '24px',
+                      width: '26px',
                       height: `${Math.max(resolvedPercent, 10)}%`,
-                      background: '#059669',
-                      borderRadius: '4px 4px 0 0',
+                      background: 'linear-gradient(180deg, #10B981 0%, #059669 100%)',
+                      borderRadius: '6px 6px 0 0',
+                      boxShadow: '0 4px 10px rgba(5, 150, 105, 0.3), inset 0 1px 1px rgba(255,255,255,0.4)',
                     }}
                   />
                 </div>
 
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
                   {t.month}
                 </span>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)', fontWeight: 600 }}>
                   {t.count} / {t.resolved}
                 </span>
               </div>
             );
           })}
         </div>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '1rem', fontSize: '0.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ width: '12px', height: '12px', background: 'var(--pup-maroon)', borderRadius: '2px' }} />
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', marginTop: '1.5rem', fontSize: '0.8rem', fontWeight: 600 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <span style={{ width: '14px', height: '14px', background: 'var(--pup-maroon-clay)', borderRadius: 'var(--radius-sm)' }} />
             <span>Reported Complaints</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ width: '12px', height: '12px', background: '#059669', borderRadius: '2px' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <span style={{ width: '14px', height: '14px', background: '#059669', borderRadius: 'var(--radius-sm)' }} />
             <span>Successfully Resolved</span>
           </div>
         </div>
       </Card>
 
       {/* Department SLA & Performance Table */}
-      <Card style={{ padding: '1.75rem' }}>
+      <Card style={{ padding: '2rem' }}>
         <CardHeader
           title="Department SLA Compliance Performance"
           subtitle="Resolution adherence rate by maintenance division"
         />
-        <div className="custom-table-container" style={{ marginTop: '1rem' }}>
+        <div className="custom-table-container" style={{ marginTop: '1.25rem' }}>
           <table className="custom-table">
             <thead>
               <tr>
@@ -363,19 +368,20 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
                 <tr key={dept.name}>
                   <td>
                     <strong>{dept.name}</strong>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Code: {dept.code}</div>
+                    <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>Code: {dept.code}</div>
                   </td>
                   <td>{dept.lead}</td>
                   <td>{dept.total} items</td>
                   <td>{dept.resolved} items</td>
                   <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                       <div
                         style={{
-                          width: '80px',
-                          height: '6px',
-                          background: 'var(--bg-main)',
+                          width: '90px',
+                          height: '8px',
+                          background: 'var(--clay-inset-bg)',
                           borderRadius: 'var(--radius-full)',
+                          boxShadow: 'var(--clay-inset-shadow)',
                           overflow: 'hidden',
                         }}
                       >
@@ -384,10 +390,11 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
                             width: `${dept.compliance}%`,
                             height: '100%',
                             background: dept.compliance >= 90 ? '#059669' : '#D97706',
+                            borderRadius: 'var(--radius-full)',
                           }}
                         />
                       </div>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: dept.compliance >= 90 ? '#059669' : '#D97706' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: dept.compliance >= 90 ? '#059669' : '#D97706' }}>
                         {dept.compliance}%
                       </span>
                     </div>

@@ -27,6 +27,7 @@ export class MemoryUserRepository implements IUserRepository {
       name: userData.name || 'Anonymous User',
       email: userData.email || '',
       role: userData.role || 'student',
+      gender: userData.gender,
       department: userData.department || 'General',
       rollNo: userData.rollNo,
       hostel: userData.hostel,

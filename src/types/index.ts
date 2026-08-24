@@ -22,11 +22,22 @@ export type ComplaintStatus =
 
 export type Priority = 'Low' | 'Medium' | 'High' | 'Urgent';
 
+export type Gender = 'Male' | 'Female' | 'Non-binary' | 'Prefer not to say' | 'Other';
+
+export const GENDER_OPTIONS: Gender[] = [
+  'Male',
+  'Female',
+  'Non-binary',
+  'Prefer not to say',
+  'Other',
+];
+
 export interface User {
   id: string;
   name: string;
   email: string;
   role: UserRole;
+  gender?: Gender;
   rollNo?: string;
   department: string;
   hostel?: string;

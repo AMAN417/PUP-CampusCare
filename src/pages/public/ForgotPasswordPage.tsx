@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { authApi } from '../../api/authApi';
 import { PUPLogo } from '../../components/common/PUPLogo';
 import { Button } from '../../components/common/Button';
@@ -35,7 +36,12 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
 
   return (
     <div className="auth-page-container">
-      <div className="auth-card-box">
+      <motion.div
+        initial={{ opacity: 0, y: 16, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        className="auth-card-box"
+      >
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{ display: 'inline-block', marginBottom: '0.75rem' }}>
@@ -89,7 +95,9 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
         ) : (
           <form onSubmit={handleSubmit}>
             {error && (
-              <div
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
                 style={{
                   background: '#FEF2F2',
                   border: '1px solid #FCA5A5',
@@ -105,7 +113,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
               >
                 <AlertCircle size={16} style={{ flexShrink: 0 }} />
                 <span>{error}</span>
-              </div>
+              </motion.div>
             )}
 
             <div className="form-group" style={{ marginBottom: '1.25rem' }}>
@@ -168,7 +176,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
             </div>
           </form>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };

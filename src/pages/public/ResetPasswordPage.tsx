@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { authApi } from '../../api/authApi';
-import { getAuthToken, setAuthToken } from '../../api/apiClient';
 import { PUPLogo } from '../../components/common/PUPLogo';
 import { Button } from '../../components/common/Button';
 import { Lock, CheckCircle2, AlertCircle, ArrowRight, Eye, EyeOff } from 'lucide-react';
@@ -15,37 +15,48 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [token, setToken] = useState<string>('');
+  const [hasRecoverySession, setHasRecoverySession] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    // Extract recovery token from URL hash or query parameters
     if (typeof window !== 'undefined') {
-      // Check query params in search or hash
       const hash = window.location.hash || '';
       const search = window.location.search || '';
 
-      // Match access_token in hash (e.g. #/reset-password#access_token=... or #access_token=...)
       const hashTokenMatch = hash.match(/access_token=([^&]+)/);
-      const searchTokenMatch = search.match(/[?&]token=([^&]+)/) || search.match(/[?&]access_token=([^&]+)/);
+      const searchTokenMatch = search.match(/[?&]access_token=([^&]+)/);
+      const hashCodeMatch = hash.match(/[?&]code=([^&]+)/);
+      const searchCodeMatch = search.match(/[?&]code=([^&]+)/);
 
       let extractedToken = '';
       if (hashTokenMatch && hashTokenMatch[1]) {
-        extractedToken = decodeURIComponent(hashTokenMatch[1]);
+        extractedToken = decodeURIComponent(hashTokenMatch[1].replace(/\+/g, '%20'));
       } else if (searchTokenMatch && searchTokenMatch[1]) {
-        extractedToken = decodeURIComponent(searchTokenMatch[1]);
-      } else {
-        // Check if an auth token is already stored in session
-        const existingToken = getAuthToken();
-        if (existingToken) {
-          extractedToken = existingToken;
-        }
+        extractedToken = decodeURIComponent(searchTokenMatch[1].replace(/\+/g, '%20'));
+      } else if (hashCodeMatch && hashCodeMatch[1]) {
+        extractedToken = decodeURIComponent(hashCodeMatch[1].replace(/\+/g, '%20'));
+      } else if (searchCodeMatch && searchCodeMatch[1]) {
+        extractedToken = decodeURIComponent(searchCodeMatch[1].replace(/\+/g, '%20'));
       }
+
+      const isRecoveryLink =
+        hash.includes('type=recovery') ||
+        search.includes('type=recovery') ||
+        Boolean(extractedToken);
 
       if (extractedToken) {
         setToken(extractedToken);
-        setAuthToken(extractedToken);
+        setHasRecoverySession(true);
+
+        try {
+          window.history.replaceState(null, '', `${window.location.pathname}#/reset-password`);
+        } catch {
+          // Ignore
+        }
+      } else if (isRecoveryLink) {
+        setHasRecoverySession(true);
       }
     }
   }, []);
@@ -81,7 +92,12 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
 
   return (
     <div className="auth-page-container">
-      <div className="auth-card-box">
+      <motion.div
+        initial={{ opacity: 0, y: 16, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        className="auth-card-box"
+      >
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{ display: 'inline-block', marginBottom: '0.75rem' }}>
@@ -134,8 +150,49 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
-            {error && (
+            {!token && !hasRecoverySession && (
               <div
+                style={{
+                  background: '#FFFBEB',
+                  border: '1px solid #FDE68A',
+                  color: '#92400E',
+                  padding: '0.75rem 1rem',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: '0.8125rem',
+                  marginBottom: '1.25rem',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.4rem',
+                }}
+              >
+                <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '1px' }} />
+                <span>
+                  No valid password reset link was detected. The link may have expired or already
+                  been used.{' '}
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('/forgot-password')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      color: '#92400E',
+                      fontWeight: 700,
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                      fontSize: 'inherit',
+                    }}
+                  >
+                    Request a new reset link
+                  </button>
+                </span>
+              </div>
+            )}
+
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
                 style={{
                   background: '#FEF2F2',
                   border: '1px solid #FCA5A5',
@@ -143,7 +200,7 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
                   padding: '0.75rem 1rem',
                   borderRadius: 'var(--radius-md)',
                   fontSize: '0.8125rem',
-                  marginBottom: '1.25rem',
+                  marginBottom: '1rem',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.4rem',
@@ -151,11 +208,11 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
               >
                 <AlertCircle size={16} style={{ flexShrink: 0 }} />
                 <span>{error}</span>
-              </div>
+              </motion.div>
             )}
 
-            <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-              <label className="form-label" style={{ fontWeight: 600 }}>New Password</label>
+            <div className="form-group">
+              <label className="form-label">New Password</label>
               <div style={{ position: 'relative' }}>
                 <Lock
                   size={16}
@@ -206,8 +263,8 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
               </div>
             </div>
 
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label className="form-label" style={{ fontWeight: 600 }}>Confirm New Password</label>
+            <div className="form-group">
+              <label className="form-label">Confirm New Password</label>
               <div style={{ position: 'relative' }}>
                 <Lock
                   size={16}
@@ -271,7 +328,7 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
             </Button>
           </form>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };

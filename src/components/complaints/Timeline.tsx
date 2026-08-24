@@ -36,26 +36,28 @@ export const Timeline: React.FC<TimelineProps> = ({
 
   if (orientation === 'horizontal') {
     return (
-      <div style={{ width: '100%', overflowX: 'auto', padding: '0.5rem 0' }}>
+      <div style={{ width: '100%', overflowX: 'auto', padding: '0.75rem 0' }}>
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             position: 'relative',
-            minWidth: '500px',
-            padding: '0.75rem 1rem',
+            minWidth: '540px',
+            padding: '1rem 1.25rem',
           }}
         >
           {/* Connecting Track Line */}
           <div
             style={{
               position: 'absolute',
-              top: '20px',
-              left: '5%',
-              right: '5%',
-              height: '3px',
-              background: 'var(--border-light)',
+              top: '28px',
+              left: '6%',
+              right: '6%',
+              height: '4px',
+              background: 'rgba(226, 232, 240, 0.9)',
+              borderRadius: 'var(--radius-full)',
+              boxShadow: 'inset 0 1px 2px rgba(15, 23, 42, 0.08)',
               zIndex: 1,
             }}
           />
@@ -63,15 +65,17 @@ export const Timeline: React.FC<TimelineProps> = ({
           <motion.div
             initial={{ width: 0 }}
             animate={{
-              width: `${(Math.max(0, currentIndex) / (ALL_STATUSES.length - 1)) * 90}%`,
+              width: `${(Math.max(0, currentIndex) / (ALL_STATUSES.length - 1)) * 88}%`,
             }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
+            transition={{ duration: 0.65, ease: 'easeOut' }}
             style={{
               position: 'absolute',
-              top: '20px',
-              left: '5%',
-              height: '3px',
+              top: '28px',
+              left: '6%',
+              height: '4px',
               background: 'linear-gradient(90deg, #7A1228 0%, #D97706 100%)',
+              borderRadius: 'var(--radius-full)',
+              boxShadow: '0 2px 6px rgba(122, 18, 40, 0.3)',
               zIndex: 2,
             }}
           />
@@ -89,54 +93,56 @@ export const Timeline: React.FC<TimelineProps> = ({
                   alignItems: 'center',
                   zIndex: 3,
                   position: 'relative',
-                  width: '80px',
+                  width: '84px',
                   textAlign: 'center',
                 }}
               >
                 <motion.div
-                  initial={{ scale: 0.8 }}
-                  animate={{ scale: isCurrent ? 1.15 : 1 }}
+                  initial={{ scale: 0.85 }}
+                  animate={{ scale: isCurrent ? 1.18 : 1 }}
                   style={{
-                    width: '40px',
-                    height: '40px',
+                    width: '44px',
+                    height: '44px',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     background: isCompleted
-                      ? 'var(--pup-maroon)'
+                      ? 'var(--pup-maroon-clay)'
                       : isCurrent
-                      ? 'var(--bg-surface)'
-                      : 'var(--bg-surface)',
+                      ? '#FFFFFF'
+                      : 'var(--clay-card-bg)',
                     color: isCompleted
                       ? '#FFFFFF'
                       : isCurrent
                       ? 'var(--pup-maroon)'
                       : 'var(--text-muted)',
                     border: isCompleted
-                      ? '2px solid var(--pup-maroon)'
+                      ? 'none'
                       : isCurrent
                       ? '3px solid var(--pup-gold)'
-                      : '2px solid var(--border-light)',
+                      : '2px solid rgba(226, 232, 240, 0.8)',
                     boxShadow: isCurrent
-                      ? '0 0 0 5px var(--pup-gold-subtle), var(--shadow-md)'
-                      : 'var(--shadow-sm)',
+                      ? '0 0 0 6px var(--pup-gold-subtle), 0 8px 18px -2px rgba(217, 119, 6, 0.3)'
+                      : isCompleted
+                      ? '0 6px 14px -2px rgba(122, 18, 40, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.4)'
+                      : '0 2px 6px rgba(15, 23, 42, 0.04), inset 0 1px 2px rgba(255, 255, 255, 0.9)',
                     transition: 'all 0.3s ease',
                   }}
                 >
-                  {isCompleted ? <Check size={18} /> : STATUS_ICONS[status]}
+                  {isCompleted ? <Check size={19} strokeWidth={2.6} /> : STATUS_ICONS[status]}
                 </motion.div>
                 <span
                   style={{
-                    fontSize: '0.75rem',
-                    fontWeight: isCurrent ? 700 : 600,
-                    marginTop: '0.5rem',
+                    fontSize: '0.775rem',
+                    fontWeight: isCurrent ? 800 : 700,
+                    marginTop: '0.6rem',
                     color: isCurrent
                       ? 'var(--pup-maroon)'
                       : isCompleted
                       ? 'var(--text-primary)'
                       : 'var(--text-muted)',
-                    lineHeight: 1.2,
+                    lineHeight: 1.25,
                   }}
                 >
                   {status}
@@ -163,7 +169,7 @@ export const Timeline: React.FC<TimelineProps> = ({
         return (
           <motion.div
             key={status}
-            initial={{ opacity: 0, x: -10 }}
+            initial={{ opacity: 0, x: -12 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3, delay: index * 0.05 }}
             className={`timeline-node ${isCompleted ? 'completed' : ''} ${isCurrent ? 'active' : ''}`}
@@ -176,14 +182,14 @@ export const Timeline: React.FC<TimelineProps> = ({
               className="timeline-dot"
               style={{
                 borderColor: isCompleted
-                  ? 'var(--pup-maroon)'
+                  ? 'transparent'
                   : isCurrent
                   ? 'var(--pup-gold)'
-                  : 'var(--border-light)',
+                  : 'rgba(203, 213, 225, 0.8)',
               }}
             >
               {isCompleted ? (
-                <Check size={14} />
+                <Check size={14} strokeWidth={2.8} />
               ) : (
                 <span style={{ color: isCurrent ? 'var(--pup-maroon)' : 'var(--text-muted)' }}>
                   {STATUS_ICONS[status]}
@@ -191,14 +197,16 @@ export const Timeline: React.FC<TimelineProps> = ({
               )}
             </div>
 
-            {/* Content Box */}
+            {/* Clay Content Box */}
             <div
               style={{
-                background: isCurrent ? 'var(--pup-maroon-subtle)' : 'var(--bg-surface)',
-                border: `1px solid ${isCurrent ? 'rgba(122, 18, 40, 0.2)' : 'var(--border-light)'}`,
-                borderRadius: 'var(--radius-md)',
-                padding: '0.75rem 1rem',
-                boxShadow: isCurrent ? 'var(--shadow-sm)' : 'none',
+                background: isCurrent ? 'linear-gradient(145deg, #FFFFFF 0%, #FDF2F4 100%)' : 'var(--clay-card-bg)',
+                border: isCurrent ? '1px solid rgba(122, 18, 40, 0.2)' : 'var(--clay-card-border)',
+                borderRadius: 'var(--radius-lg)',
+                padding: '0.9rem 1.25rem',
+                boxShadow: isCurrent 
+                  ? '0 8px 20px -3px rgba(122, 18, 40, 0.12), inset 0 2px 3px rgba(255, 255, 255, 1)'
+                  : 'var(--clay-card-shadow)',
               }}
             >
               <div
@@ -209,12 +217,13 @@ export const Timeline: React.FC<TimelineProps> = ({
                   gap: '0.5rem',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                   <span
                     style={{
-                      fontSize: '0.875rem',
-                      fontWeight: 700,
+                      fontSize: '0.925rem',
+                      fontWeight: 800,
                       color: isCurrent ? 'var(--pup-maroon)' : 'var(--text-primary)',
+                      letterSpacing: '-0.01em',
                     }}
                   >
                     {status}
@@ -222,13 +231,15 @@ export const Timeline: React.FC<TimelineProps> = ({
                   {isCurrent && (
                     <span
                       style={{
-                        background: 'var(--pup-gold)',
+                        background: 'var(--pup-gold-clay)',
                         color: 'white',
-                        fontSize: '0.65rem',
-                        fontWeight: 700,
-                        padding: '1px 6px',
+                        fontSize: '0.685rem',
+                        fontWeight: 800,
+                        padding: '2px 8px',
                         borderRadius: 'var(--radius-full)',
                         textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        boxShadow: '0 2px 5px rgba(217, 119, 6, 0.3)',
                       }}
                     >
                       Current State
@@ -237,7 +248,7 @@ export const Timeline: React.FC<TimelineProps> = ({
                 </div>
 
                 {matchedHistory && (
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  <span style={{ fontSize: '0.775rem', color: 'var(--text-muted)', fontWeight: 500 }}>
                     {new Date(matchedHistory.timestamp).toLocaleString([], {
                       month: 'short',
                       day: 'numeric',
@@ -249,9 +260,9 @@ export const Timeline: React.FC<TimelineProps> = ({
               </div>
 
               {matchedHistory && (
-                <div style={{ marginTop: '0.35rem', fontSize: '0.8125rem' }}>
+                <div style={{ marginTop: '0.45rem', fontSize: '0.85rem' }}>
                   {matchedHistory.notes && (
-                    <p style={{ color: 'var(--text-secondary)', margin: 0, fontStyle: 'italic' }}>
+                    <p style={{ color: 'var(--text-secondary)', margin: 0, fontStyle: 'italic', lineHeight: 1.45 }}>
                       "{matchedHistory.notes}"
                     </p>
                   )}
@@ -259,26 +270,27 @@ export const Timeline: React.FC<TimelineProps> = ({
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.75rem',
-                      marginTop: '0.25rem',
-                      fontSize: '0.75rem',
+                      gap: '0.85rem',
+                      marginTop: '0.35rem',
+                      fontSize: '0.775rem',
                       color: 'var(--text-muted)',
+                      fontWeight: 500,
                     }}
                   >
-                    <span>By: {matchedHistory.updatedBy}</span>
-                    {matchedHistory.department && <span>Dept: {matchedHistory.department}</span>}
+                    <span>By: <strong style={{ color: 'var(--text-secondary)' }}>{matchedHistory.updatedBy}</strong></span>
+                    {matchedHistory.department && <span>Dept: <strong>{matchedHistory.department}</strong></span>}
                   </div>
                 </div>
               )}
 
               {!matchedHistory && !isUpcoming && (
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)', marginTop: '0.25rem', fontWeight: 500 }}>
                   Completed
                 </div>
               )}
 
               {isUpcoming && (
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
                   Pending next administrative action
                 </div>
               )}

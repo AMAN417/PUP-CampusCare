@@ -1,5 +1,5 @@
 import { IUserRepository } from '../interfaces.js';
-import { User, UserRole } from '../../types/index.js';
+import { User, UserRole, Gender } from '../../types/index.js';
 import { getSupabaseClient } from '../../database/supabaseClient.js';
 
 interface DbUserRow {
@@ -7,6 +7,7 @@ interface DbUserRow {
   name: string;
   email: string;
   role: string;
+  gender?: string | null;
   roll_no?: string | null;
   department: string;
   hostel?: string | null;
@@ -19,12 +20,30 @@ interface DbUserRow {
 }
 
 export class SupabaseUserRepository implements IUserRepository {
+  // True once we detect that the `gender` column is missing (migration not yet applied).
+  // Registration must keep working before/without the migration; gender simply
+  // degrades to user_metadata-only storage until the column exists.
+  private static genderColumnMissing = false;
+
+  private isGenderColumnError(error: { code?: string; message?: string } | null | undefined): boolean {
+    if (!error) return false;
+    const msg = (error.message || '').toLowerCase();
+    return (
+      error.code === '42703' ||
+      error.code === 'PGRST204' ||
+      msg.includes("column 'gender'") ||
+      msg.includes('column "gender"') ||
+      (msg.includes('gender') && (msg.includes('does not exist') || msg.includes('schema cache')))
+    );
+  }
+
   private mapRowToModel(row: DbUserRow): User {
     return {
       id: row.id,
       name: row.name,
       email: row.email,
       role: row.role as UserRole,
+      gender: (row.gender as Gender) || undefined,
       rollNo: row.roll_no || undefined,
       department: row.department,
       hostel: row.hostel || undefined,
@@ -81,6 +100,7 @@ export class SupabaseUserRepository implements IUserRepository {
       name: user.name || 'Anonymous User',
       email: user.email || '',
       role: user.role || 'student',
+      gender: SupabaseUserRepository.genderColumnMissing ? null : user.gender || null,
       roll_no: user.rollNo || null,
       department: user.department || 'General',
       hostel: user.hostel || null,
@@ -90,15 +110,34 @@ export class SupabaseUserRepository implements IUserRepository {
       joined_date: user.joinedDate || new Date().toISOString().split('T')[0],
     };
 
+    if (SupabaseUserRepository.genderColumnMissing) {
+      delete insertPayload.gender;
+    }
+
     if (user.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id)) {
       insertPayload.id = user.id;
     }
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('users')
       .insert(insertPayload)
       .select()
       .single();
+
+    // Self-healing retry: if the gender column hasn't been migrated yet,
+    // drop it from the payload and retry so registration still succeeds.
+    if (error && this.isGenderColumnError(error) && 'gender' in insertPayload) {
+      SupabaseUserRepository.genderColumnMissing = true;
+      console.warn(
+        '[SupabaseUserRepository] users.gender column missing — run server/src/database/migrations/add_gender_to_users.sql. Retrying without gender.'
+      );
+      delete insertPayload.gender;
+      ({ data, error } = await supabase
+        .from('users')
+        .insert(insertPayload)
+        .select()
+        .single());
+    }
 
     if (error || !data) {
       throw new Error(`Failed to create user in Supabase: ${error?.message}`);
@@ -121,17 +160,35 @@ export class SupabaseUserRepository implements IUserRepository {
         department: user.department || existing.department,
         status: user.status || existing.status,
       };
+      if (user.gender !== undefined && !SupabaseUserRepository.genderColumnMissing) {
+        updatePayload.gender = user.gender;
+      }
       if (user.rollNo !== undefined) updatePayload.roll_no = user.rollNo;
       if (user.hostel !== undefined) updatePayload.hostel = user.hostel;
       if (user.phone !== undefined) updatePayload.phone = user.phone;
       if (user.avatar !== undefined) updatePayload.avatar = user.avatar;
 
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('users')
         .update(updatePayload)
         .eq('id', existing.id)
         .select()
         .single();
+
+      // Self-healing retry when the gender column is not migrated yet
+      if (error && this.isGenderColumnError(error) && 'gender' in updatePayload) {
+        SupabaseUserRepository.genderColumnMissing = true;
+        console.warn(
+          '[SupabaseUserRepository] users.gender column missing — run server/src/database/migrations/add_gender_to_users.sql. Retrying without gender.'
+        );
+        delete updatePayload.gender;
+        ({ data, error } = await supabase
+          .from('users')
+          .update(updatePayload)
+          .eq('id', existing.id)
+          .select()
+          .single());
+      }
 
       if (error || !data) {
         throw new Error(`Failed to update user in Supabase: ${error?.message}`);
@@ -145,6 +202,7 @@ export class SupabaseUserRepository implements IUserRepository {
       name: user.name || 'Anonymous User',
       email,
       role: user.role || 'student',
+      gender: user.gender || null,
       roll_no: user.rollNo || null,
       department: user.department || 'General',
       hostel: user.hostel || null,
@@ -154,15 +212,33 @@ export class SupabaseUserRepository implements IUserRepository {
       joined_date: user.joinedDate || new Date().toISOString().split('T')[0],
     };
 
+    if (SupabaseUserRepository.genderColumnMissing) {
+      delete insertPayload.gender;
+    }
+
     if (user.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id)) {
       insertPayload.id = user.id;
     }
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('users')
       .insert(insertPayload)
       .select()
       .single();
+
+    // Self-healing retry when the gender column is not migrated yet
+    if (error && this.isGenderColumnError(error) && 'gender' in insertPayload) {
+      SupabaseUserRepository.genderColumnMissing = true;
+      console.warn(
+        '[SupabaseUserRepository] users.gender column missing — run server/src/database/migrations/add_gender_to_users.sql. Retrying without gender.'
+      );
+      delete insertPayload.gender;
+      ({ data, error } = await supabase
+        .from('users')
+        .insert(insertPayload)
+        .select()
+        .single());
+    }
 
     if (error || !data) {
       throw new Error(`Failed to insert user in Supabase: ${error?.message}`);

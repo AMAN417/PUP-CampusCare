@@ -8,12 +8,17 @@ export const LoadingSkeleton: React.FC<{
 
   if (type === 'table') {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', width: '100%' }}>
         {items.map((_, i) => (
           <div
             key={i}
             className="skeleton"
-            style={{ height: '48px', width: '100%', borderRadius: 'var(--radius-md)' }}
+            style={{
+              height: '52px',
+              width: '100%',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--clay-inset-shadow)',
+            }}
           />
         ))}
       </div>
@@ -22,12 +27,16 @@ export const LoadingSkeleton: React.FC<{
 
   if (type === 'text') {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', width: '100%' }}>
         {items.map((_, i) => (
           <div
             key={i}
             className="skeleton"
-            style={{ height: '16px', width: i === count - 1 ? '60%' : '100%' }}
+            style={{
+              height: '18px',
+              width: i === count - 1 ? '60%' : '100%',
+              borderRadius: 'var(--radius-sm)',
+            }}
           />
         ))}
       </div>
@@ -36,11 +45,20 @@ export const LoadingSkeleton: React.FC<{
 
   if (type === 'profile') {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem' }}>
-        <div className="skeleton" style={{ width: 64, height: 64, borderRadius: '50%' }} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-          <div className="skeleton" style={{ height: 20, width: '40%' }} />
-          <div className="skeleton" style={{ height: 14, width: '60%' }} />
+      <div
+        className="card"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1.25rem',
+          padding: '1.5rem',
+          boxShadow: 'var(--clay-card-shadow)',
+        }}
+      >
+        <div className="skeleton" style={{ width: 68, height: 68, borderRadius: '50%' }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', flex: 1 }}>
+          <div className="skeleton" style={{ height: 22, width: '45%' }} />
+          <div className="skeleton" style={{ height: 16, width: '65%' }} />
         </div>
       </div>
     );
@@ -48,14 +66,15 @@ export const LoadingSkeleton: React.FC<{
 
   // Default: card skeleton
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
       {items.map((_, i) => (
         <div
           key={i}
           className="skeleton"
           style={{
-            height: '180px',
-            borderRadius: 'var(--radius-lg)',
+            height: '190px',
+            borderRadius: 'var(--radius-xl)',
+            boxShadow: 'var(--clay-card-shadow)',
           }}
         />
       ))}
