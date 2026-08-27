@@ -425,7 +425,7 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
                   </div>
 
                   {/* Primary Decision Action: Approve Recommendation */}
-                  {incident.status === 'submitted' || incident.status === 'assigned' ? (
+                  {(incident.status === 'submitted' || incident.status === 'assigned') && !incident.workOrderId ? (
                     <div className="space-y-2">
                       <button
                         onClick={handleApprove}
@@ -457,6 +457,14 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
                       </div>
                     </div>
                   ) : null}
+
+                  {/* Work Order Already Exists — duplicate prevention pill */}
+                  {incident.workOrderId && (
+                    <div className="w-full py-2.5 px-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs flex items-center justify-center gap-2 font-mono font-semibold">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />
+                      Work Order <strong className="text-white ml-1">{incident.workOrderId}</strong>&nbsp;already dispatched
+                    </div>
+                  )}
 
                   {/* Operational Status Toggles */}
                   <div className="grid grid-cols-2 gap-2 pt-1">
@@ -497,6 +505,74 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
                     </button>
                   )}
                 </div>
+
+                {/* Work Order Lifecycle Tracker — visible when a WO has been dispatched */}
+                {incident.workOrderId && (() => {
+                  const WO_STEPS = [
+                    { label: 'Created', verified: false },
+                    { label: 'Assigned', verified: false },
+                    { label: 'In Progress', verified: false },
+                    { label: 'Completed', verified: false },
+                    { label: 'AI Verified', verified: true },
+                  ]
+                  const currentStep = incident.verifiedByAi ? 4
+                    : incident.status === 'resolved' ? 3
+                    : incident.status === 'in_progress' ? 2
+                    : 1
+
+                  return (
+                    <div className="bg-[#05070D] border border-white/[0.06] rounded-2xl p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono uppercase text-slate-400 font-bold flex items-center gap-1.5">
+                          <Link2 className="w-3 h-3 text-cyan-400" />
+                          Work Order Lifecycle
+                        </span>
+                        <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/50 border border-cyan-500/20 px-2 py-0.5 rounded">
+                          {incident.workOrderId}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center">
+                        {WO_STEPS.map((step, idx) => {
+                          const done = idx <= currentStep
+                          const active = idx === currentStep
+                          return (
+                            <React.Fragment key={step.label}>
+                              <div className="flex flex-col items-center gap-1 flex-1 min-w-0">
+                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all ${
+                                  done && step.verified
+                                    ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
+                                    : done
+                                    ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
+                                    : active
+                                    ? 'bg-violet-500/20 border-violet-500/50 text-violet-400 animate-pulse'
+                                    : 'bg-white/[0.03] border-white/[0.08] text-slate-600'
+                                }`}>
+                                  {done ? (
+                                    <Check className="w-2.5 h-2.5" />
+                                  ) : (
+                                    <span className="text-[8px] font-bold">{idx + 1}</span>
+                                  )}
+                                </div>
+                                <span className={`text-[9px] font-mono text-center leading-tight ${
+                                  done && step.verified ? 'text-emerald-400'
+                                  : done ? 'text-cyan-300'
+                                  : active ? 'text-violet-300'
+                                  : 'text-slate-600'
+                                }`}>
+                                  {step.label}
+                                </span>
+                              </div>
+                              {idx < WO_STEPS.length - 1 && (
+                                <div className={`h-px flex-1 mb-4 transition-all ${idx < currentStep ? 'bg-cyan-500/40' : 'bg-white/[0.06]'}`} />
+                              )}
+                            </React.Fragment>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })()}
               </div>
             </div>
 
